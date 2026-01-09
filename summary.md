@@ -1,4 +1,5 @@
-**Taxonomy of worms and viruses**
+Taxonomy of worms and viruses
+==
 
 • Creating our own malware 
 
@@ -9,3 +10,5 @@
 • We would set up our network so that it can return proof that each machine was infected, and the intended effects happened.  
 
 • Scale of the project, reproducibility of previous malwares, learning enough quickly in order to be able to complete more than just the trivial example. 
+
+
