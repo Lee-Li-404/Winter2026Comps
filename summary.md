@@ -18,4 +18,8 @@ Malware detection and categorization has traditionally been a challenging and ex
 
 Deliverables can include replication of the findings of this [paper](https://dl.acm.org/doi/10.1145/2016904.2016908) or conducting a comparison study between the methods from the [paper](https://dl.acm.org/doi/10.1145/2016904.2016908) and more modern architectures.
 
-To test the 
+To test the efficacy of the model, we will measure the model performance on a test set, or collection of malwares that the model has not previously seen before, using standard measurements like F1 score. 
+
+Potential barriers to success include difficulty of finding the dataset, vast hyperparameter space for neural networks, and limits in computational resources. 
+
+While the main focus of this project will be to replicate the findings of the paper, the focus of this projects leans heavily towards machine learning then malware analysis. 
