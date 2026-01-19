@@ -6,6 +6,8 @@ import subprocess
 import re
 from random import randint
 
+# this is for aarch64 system; will not work on x86 systems
+
 # Find the next victim (return an IP address).
 # Check to make sure that the target is alive.
 def getNextTarget():
