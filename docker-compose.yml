@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  node-a:
+    image: ye-olde-bsd
+    container_name: bsd_node_a
+    stdin_open: true # Equivalent to -i
+    tty: true        # Equivalent to -t
+    cpus: 0.1        # Keep the cpu limit you used
+    ports:
+      - "2323:23"    # Telnet mapped to 2323
+      - "2525:25"    # SMTP mapped to 2525
+    networks:
+      bsd_net:
+        ipv4_address: 172.20.0.10
+
+  node-b:
+    image: ye-olde-bsd
+    container_name: bsd_node_b
+    stdin_open: true
+    tty: true
+    cpus: 0.1
+    ports:
+      - "2324:23"    # Telnet mapped to 2324
+      - "2526:25"    # SMTP mapped to 2526
+    networks:
+      bsd_net:
+        ipv4_address: 172.20.0.11
+
+networks:
+  bsd_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
