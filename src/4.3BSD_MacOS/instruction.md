@@ -50,9 +50,17 @@ cd ~/Downloads/path/to/vax780_folder
 ./vax780
 ```
 
+4. Initialize the System: When you see the sim> prompt, type the following command to load the configuration:
+
+```bash
+do vax780_old.ini
+```
+
 If successful, you will see SIMH version information and boot messages.
 
 ## Connecting to the Console
+
+## Listening to Port 40316
 
 The simulator often detaches the console to a network port instead of accepting input directly in the terminal window. The default port is usually `40316`.
 
