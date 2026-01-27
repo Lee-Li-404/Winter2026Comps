@@ -72,6 +72,14 @@ The simulator often detaches the console to a network port instead of accepting 
 telnet localhost 40316
 ```
 
+4. If prompted to login, just use
+
+```bash
+root
+```
+
+and hit enter
+
 > Note: macOS High Sierra and later do not include `telnet` by default. If `telnet` is not found, install it using Homebrew:
 
 ```bash
