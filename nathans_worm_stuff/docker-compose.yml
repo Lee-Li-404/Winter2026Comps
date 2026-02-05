@@ -1,0 +1,121 @@
+# Old 2 node version
+
+# version: '3.8'
+
+# services:
+#   node-a:
+#     image: ye-olde-bsd
+#     container_name: bsd_node_a
+#     stdin_open: true # Equivalent to -i
+#     tty: true        # Equivalent to -t
+#     cpus: 0.1        # Keep the cpu limit you used
+#     ports:
+#       - "2323:23"    # Telnet mapped to 2323
+#       - "2525:25"    # SMTP mapped to 2525
+#     networks:
+#       bsd_net:
+#         ipv4_address: 172.20.0.10
+
+#   node-b:
+#     image: ye-olde-bsd
+#     container_name: bsd_node_b
+#     stdin_open: true
+#     tty: true
+#     cpus: 0.1
+#     ports:
+#       - "2324:23"    # Telnet mapped to 2324
+#       - "2526:25"    # SMTP mapped to 2526
+#     networks:
+#       bsd_net:
+#         ipv4_address: 172.20.0.11
+
+# networks:
+#   bsd_net:
+#     driver: bridge
+#     ipam:
+#       config:
+#         - subnet: 172.20.0.0/24
+
+version: '3.8'
+
+x-bsd-defaults: &bsd-defaults
+  image: ye-olde-bsd
+  stdin_open: true
+  tty: true
+  cpus: 0.1
+  # The worm exploited these internal ports. 
+  # We map them to unique high ports on your Mac for observation.
+  networks:
+    worm_net: {}
+
+services:
+  # The Main Target (Patient Zero)
+  target-prime:
+    <<: *bsd-defaults
+    container_name: target-prime
+    networks:
+      worm_net:
+        ipv4_address: 172.20.0.10
+    ports:
+      - "2300:23"   # Telnet
+      - "2500:25"   # SMTP (Sendmail - Worm Vector #1)
+      - "7900:79"   # Finger (Worm Vector #2)
+      - "5120:512"  # exec (Worm Vector #3)
+
+  # The Network Nodes (1-5)
+  node-1:
+    <<: *bsd-defaults
+    container_name: node-1
+    networks:
+      worm_net:
+        ipv4_address: 172.20.0.11
+    ports:
+      - "2301:23"
+      - "2501:25"
+
+  node-2:
+    <<: *bsd-defaults
+    container_name: node-2
+    networks:
+      worm_net:
+        ipv4_address: 172.20.0.12
+    ports:
+      - "2302:23"
+      - "2502:25"
+
+  node-3:
+    <<: *bsd-defaults
+    container_name: node-3
+    networks:
+      worm_net:
+        ipv4_address: 172.20.0.13
+    ports:
+      - "2303:23"
+      - "2503:25"
+
+  node-4:
+    <<: *bsd-defaults
+    container_name: node-4
+    networks:
+      worm_net:
+        ipv4_address: 172.20.0.14
+    ports:
+      - "2304:23"
+      - "2504:25"
+
+  node-5:
+    <<: *bsd-defaults
+    container_name: node-5
+    networks:
+      worm_net:
+        ipv4_address: 172.20.0.15
+    ports:
+      - "2305:23"
+      - "2505:25"
+
+networks:
+  worm_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
