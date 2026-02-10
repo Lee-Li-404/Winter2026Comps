@@ -1,6 +1,15 @@
 # Winter2026Comps
 <img width="480" height="320" alt="worm on a keyboard" src="https://github.com/user-attachments/assets/3ea4cb00-61e2-4a5d-bab7-f4aa8af37f8a" />
 
+More refined (still very coarse) plan for demos
+-----------------------------------------------
+
+We need to "update" the base docker containers to have the `movemail` vulnerability, so that fingerd exploit can be used to get a root shell (see [bsd_additional_setup.md](src/bsd_additional_setup.md)
+
+Instead of trying to combine the two exploits as a single worm, it may be worth while to have two set of demos (one for smtp and one for fingerd) 
+
+I think it would be possible to share the underlying client-server architecture (either central or distributed model)
+
 The planned unfolding of  the worm (Changwoo)
 ---------------------------------------------
 
@@ -28,6 +37,8 @@ The planned unfolding of  the worm (Changwoo)
 
 
 Unaddressed but important questions to consider
+-----------------------------------------------
+
 1. should i limit the number of targets that a single host can infect? 
 2. how do we find the ip addresses? hard coded? 
     - another way might be to use expect script to start the simulation and run relevant network configuration commands, so that ip addresses of vax machines reflect those assigned by docker network 
@@ -36,4 +47,7 @@ Unaddressed but important questions to consider
         - each socket message might be small, but you have to maintain a lot more sockets 
     - distributed model is where you have hierarchy of worm servers that facilitates connections with their immediate descendants 
         - each socket message might be big, but you don’t have to matain a lot of sockets 
-
+4. Porting everything to work with SEED labs? 
+	- this will make visualization much more easier (we can just `ping 1.2.3.4` and then use the seed lab visualizer); but this is only benefit that I can think of 
+	- There are lot of hurdles for this undertaking, most notably the absence of sendmail program 
+	- also, it appears that gcc is missing in the nodes and apt does not work because the nodes themselves are disconnected from the internet; necessary header files may not also be present in the system
