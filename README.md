@@ -7,7 +7,9 @@ The planned unfolding of  the worm (Changwoo)
 1. as a client, connect to the vulnerable fingerd socket 
 2. deliver the payload and get a shell 
 3. conduct privilege escalation to get a root shell (movemail and crontab) 
+
 ——————(yet to be implemented from this point) —————— 
+
 4. install vector program on the target using the root shell 
     - one approach would be to just have the files as a giant string, echo’ing the text into a file 
     - another approach would be to load the vector program into an object like the original worm code and somehow send that over
