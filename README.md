@@ -4,7 +4,7 @@
 More refined (still very coarse) plan for demos
 -----------------------------------------------
 
-We need to "update" the base docker containers to have the `movemail` vulnerability, so that fingerd exploit can be used to get a root shell (see [bsd_additional_setup.md](src/bsd_additional_setup.md)
+We need to "update" the base docker containers to have the `movemail` vulnerability, so that fingerd exploit can be used to get a root shell (see [bsd_additional_setup.md](src/bsd_additional_setup.md))
 
 Instead of trying to combine the two exploits as a single worm, it may be worth while to have two set of demos (one for smtp and one for fingerd) 
 
