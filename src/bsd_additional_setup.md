@@ -39,4 +39,8 @@ Because we are relying upon docker images and docker compose to create virtual n
 3. run `docker ps -a` to get the container ID of the container with the movemail vulnerability 
 4. run `docker commit <container_id> 4.3bsd_w_movemail` to commit the container as image with tag `4.3bsd_w_movemail`
 5. Use this image in docker compose file instead of the ye-olde-bsd image
-6. confirm that movemail is in new containers by running `ls /etc/movemail`
+6. confirm that movemail is in new containers by running `ls -l /etc/movemail` you should see the following 
+```
+simh# ls -l /etc/movemail
+-rwsr-xr-x  1 root        15360 Feb  9 10:50 /etc/movemail*
+```
