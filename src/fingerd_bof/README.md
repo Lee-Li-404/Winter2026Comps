@@ -19,3 +19,15 @@ Files
 
 `_bsd` suffix indicates that the c code is written in old c that is recognized by c compiler on 4.3BSD systems
 
+Notes
+-----
+
+The worm has 2 main components: 
+- server
+	- search for attack-able hosts
+	- break into vulnerable hosts
+	- send over vector file 
+	- if vector file successfully uploads core files, compile and run the program
+- vector:
+	- pull files from the server 
+	- communicate back to the server if files were successfully downloaded on the host
