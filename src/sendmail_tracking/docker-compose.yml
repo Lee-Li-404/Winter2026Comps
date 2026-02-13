@@ -1,0 +1,165 @@
+version: "3.8"
+
+x-bsd-defaults: &bsd-defaults
+  build: .
+  image: ye-olde-bsd
+  stdin_open: true
+  tty: true
+  privileged: true
+  deploy:
+    resources:
+      limits:
+        cpus: "0.1"
+  # HERE IS THE COMMAND YOU WANTED
+  # It runs setup.exp, then immediately runs identity.exp, then boots.
+  # In your x-bsd-defaults block
+  command: >
+    /bin/sh -c "./identity.exp && exec ./vax780 boot.ini"
+
+services:
+  # --- INFRASTRUCTURE ---
+  router:
+    image: alpine:latest
+    container_name: router
+    privileged: true
+    networks:
+      net_alpha:
+        ipv4_address: 172.20.0.254
+      net_beta:
+        ipv4_address: 172.20.1.254
+    command: >
+      /bin/sh -c "
+      apk add --no-cache iptables iproute2 &&
+      sysctl -w net.ipv4.ip_forward=1 &&
+      iptables -t nat -A POSTROUTING -o eth1 -j MASQUERADE &&
+      iptables -A FORWARD -i eth0 -o eth1 -j ACCEPT &&
+      iptables -A FORWARD -i eth1 -o eth0 -m state --state RELATED,ESTABLISHED -j ACCEPT &&
+      tail -f /dev/null
+      "
+
+  # --- VAX NODES ---
+
+  target-prime:
+    <<: *bsd-defaults
+    container_name: target-prime
+    environment:
+      - NEIGHBOR_IP=172.20.0.11
+      - NEIGHBOR_NAME=node-1
+    networks:
+      net_alpha:
+        ipv4_address: 172.20.0.10
+    ports:
+      - "2300:23"
+      - "2500:25"
+      - "7900:79"
+
+  node-1:
+    <<: *bsd-defaults
+    container_name: node-1
+    environment:
+      - NEIGHBOR_IP=172.20.0.12
+      - NEIGHBOR_NAME=node-2
+    networks:
+      net_alpha:
+        ipv4_address: 172.20.0.11
+    ports:
+      - "2301:23"
+      - "2501:25"
+
+  node-2:
+    <<: *bsd-defaults
+    container_name: node-2
+    environment:
+      - NEIGHBOR_IP=172.20.0.13
+      - NEIGHBOR_NAME=node-3
+    networks:
+      net_alpha:
+        ipv4_address: 172.20.0.12
+    ports:
+      - "2302:23"
+      - "2502:25"
+
+  node-3:
+    <<: *bsd-defaults
+    container_name: node-3
+    environment:
+      - NEIGHBOR_IP=172.20.0.14
+      - NEIGHBOR_NAME=node-4
+    networks:
+      net_alpha:
+        ipv4_address: 172.20.0.13
+    ports:
+      - "2303:23"
+      - "2503:25"
+
+  node-4:
+    <<: *bsd-defaults
+    container_name: node-4
+    environment:
+      - NEIGHBOR_IP=172.20.0.15
+      - NEIGHBOR_NAME=node-5
+    networks:
+      net_alpha:
+        ipv4_address: 172.20.0.14
+    ports:
+      - "2304:23"
+      - "2504:25"
+
+  node-5:
+    <<: *bsd-defaults
+    container_name: node-5
+    environment:
+      - NEIGHBOR_IP=172.20.0.10
+      - NEIGHBOR_NAME=target-prime
+    networks:
+      net_alpha:
+        ipv4_address: 172.20.0.15
+    ports:
+      - "2305:23"
+      - "2505:25"
+
+  # --- SUPPORT ---
+
+  internet-sim:
+    image: alpine:latest
+    container_name: internet-sim
+    privileged: true
+    networks:
+      net_beta:
+        ipv4_address: 172.20.1.100
+    command: >
+      /bin/sh -c "
+      sleep 2 &&
+      ip addr add 1.2.3.4/32 dev eth0 || true &&
+      ip route add 172.20.0.0/24 via 172.20.1.254 || true &&
+      echo 'Internet Sim Ready' &&
+      tail -f /dev/null
+      "
+
+  tracker:
+    image: alpine:latest
+    container_name: tracker
+    privileged: true
+    network_mode: "host"
+    volumes:
+      - ./tracker.sh:/app/tracker.sh
+      - ./www:/app/www
+    working_dir: /app
+    command: >
+      /bin/sh -c "
+      apk add --no-cache tcpdump grep sed &&
+      chmod +x tracker.sh &&
+      ./tracker.sh
+      "
+
+networks:
+  net_alpha:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+  net_beta:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.1.0/24

@@ -1,0 +1,43 @@
+#!/usr/bin/expect -f
+
+# 1. Get Neighbor info
+set ip $env(NEIGHBOR_IP)
+set name $env(NEIGHBOR_NAME)
+
+# 2. Boot the simulator
+spawn ./vax780 boot.ini
+set timeout 120
+
+# 3. Wait for login
+expect "login:"
+send "root\r"
+expect "# "
+
+# 4. Append neighbor
+send "echo \"$ip\t$name\" >> /etc/hosts\r"
+expect "# "
+
+# 5. Safe Exeunt (Mirrors setup.exp logic)
+send "cd /\r"
+expect "# "
+
+# Unmount /usr (ra0h) so it's clean
+# Based on your logs, the VAX is mounting ra0h to /usr
+send "umount /dev/ra0h\r"
+expect "# "
+
+# Triple sync: The Legend of Sync
+send "sync\r"
+expect "# "
+send "sync\r"
+expect "# "
+send "sync\r"
+expect "# "
+
+# 6. Stop Simulation (Send Ctrl+E)
+send "\005"
+expect "Simulation stopped"
+
+# 7. Quit SIMH
+send "q\r"
+expect eof
