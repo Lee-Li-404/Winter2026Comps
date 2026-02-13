@@ -4,6 +4,7 @@ Fingerd Buffer Overflow
 TODO
 ----
 
+- [ ] refactor `_bsd` versions
 - [ ] merge the docker setup 
 - [ ] automate host detection 
 - [ ] create a vector program to transfer files between host and server
