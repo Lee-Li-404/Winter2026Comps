@@ -28,6 +28,9 @@ The worm has 2 main components:
 	- break into vulnerable hosts
 	- send over vector file 
 	- if vector file successfully uploads core files, compile and run the program
-- vector:
+- vector (the original vector function does more than this)
 	- pull files from the server 
 	- communicate back to the server if files were successfully downloaded on the host
+
+It is my current suspicion that we need every worm to become a client that connects back to the prime worm server, so that information can be gathered and viewed on the prime server
+
