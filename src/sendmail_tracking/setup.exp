@@ -165,3 +165,24 @@ send ""
 expect "Simulation stopped*\n"
 send "q\n"
 expect eof
+
+# Booting the emulator
+spawn ./vax780 boot.ini
+expect "login:"
+send "root\n"
+expect "# "
+
+# movemail exploit setup
+send_cmd "cd /usr/src/contrib/emacs/etc"
+send_cmd "make movemail"
+send_cmd "cp movemail /etc"
+send_cmd "chmod 4755 /etc/movemail"
+
+# syncing for some reason
+send_cmd "sync"
+send_cmd "sync"
+send_cmd "sync"
+send ""
+expect "Simulation stopped*\n"
+send "q\n"
+expect eof
