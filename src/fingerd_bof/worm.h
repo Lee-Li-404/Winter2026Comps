@@ -9,6 +9,7 @@
 #include <unistd.h>
 
 #define TARGET_IP "172.20.0.10"
+#define TRANSFER_PORT 9999 // added for vector.c w random port number, might need to change.
 #define FINGERD_PORT 79
 
 // Buffer overflow related things
