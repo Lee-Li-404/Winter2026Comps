@@ -27,6 +27,7 @@
         border: 1px solid #30363d;
         border-radius: 6px;
         pointer-events: none;
+        z-index: 10;
       }
       h1 {
         margin: 0 0 10px 0;
@@ -53,9 +54,6 @@
         background-color: #da3633;
         border: 2px solid #da3633;
         box-shadow: 0 0 10px #da3633;
-      }
-      .router {
-        background-color: #8b949e;
       }
     </style>
   </head>
@@ -87,28 +85,55 @@
         "172.20.0.13": 13,
         "172.20.0.14": 14,
         "172.20.0.15": 15,
+        "172.20.0.16": 16,
+        "172.20.0.17": 17,
+        "172.20.0.18": 18,
+        "172.20.0.19": 19,
       };
 
       // --- Network Topology ---
       var nodes = new vis.DataSet([
-        { id: 1, label: "Internet\n(Sim)", shape: "cloud", color: "#58a6ff" },
-        { id: 2, label: "Router\n(Gateway)", shape: "box", color: "#8b949e" },
+        { id: 2, label: "Router\n(Gateway 1)", shape: "box", color: "#8b949e" },
+        { id: 3, label: "Router\n(Gateway 2)", shape: "box", color: "#8b949e" },
+
+        // Subnet 1 Nodes
         { id: 10, label: "TARGET PRIME\n172.20.0.10", group: "vax" },
         { id: 11, label: "Node 1\n172.20.0.11", group: "vax" },
         { id: 12, label: "Node 2\n172.20.0.12", group: "vax" },
         { id: 13, label: "Node 3\n172.20.0.13", group: "vax" },
         { id: 14, label: "Node 4\n172.20.0.14", group: "vax" },
+
+        // Subnet 2 Nodes
         { id: 15, label: "Node 5\n172.20.0.15", group: "vax" },
+        { id: 16, label: "Node 6\n172.20.0.16", group: "vax" },
+        { id: 17, label: "Node 7\n172.20.0.17", group: "vax" },
+        { id: 18, label: "Node 8\n172.20.0.18", group: "vax" },
+        { id: 19, label: "Node 9\n172.20.0.19", group: "vax" },
       ]);
 
       var edges = new vis.DataSet([
-        { from: 1, to: 2, dashes: true }, // Internet to Router
+        // Gateway 1 Connections
         { from: 2, to: 10 },
         { from: 2, to: 11 },
         { from: 2, to: 12 },
         { from: 2, to: 13 },
         { from: 2, to: 14 },
-        { from: 2, to: 15 },
+
+        // Gateway 2 Connections
+        { from: 3, to: 15 },
+        { from: 3, to: 16 },
+        { from: 3, to: 17 },
+        { from: 3, to: 18 },
+        { from: 3, to: 19 },
+
+        // The Bridge between Node 4 and Node 5
+        {
+          from: 14,
+          to: 15,
+          width: 2,
+          dashes: true,
+          color: { color: "#58a6ff" },
+        },
       ]);
 
       // Render the Graph
