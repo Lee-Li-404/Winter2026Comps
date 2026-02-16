@@ -4,8 +4,8 @@ Fingerd Buffer Overflow
 TODO
 ----
 
+- [x] merge the docker setup 
 - [ ] refactor `_bsd` versions
-- [ ] merge the docker setup 
 - [ ] automate host detection 
 - [ ] create a vector program to transfer files between host and server
 - [ ] figure out how to send information back to the prime server
@@ -26,7 +26,7 @@ The worm has 2 main components:
 - server
 	- search for attack-able hosts
 	- break into vulnerable hosts
-	- send over vector file 
+	- send over vector file; giant bash script?
 	- if vector file successfully uploads core files, compile and run the program
 - vector (the original vector function does more than this)
 	- pull files from the server 
