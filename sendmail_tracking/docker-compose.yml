@@ -138,7 +138,7 @@ services:
     <<: *bsd-defaults
     container_name: node-9
     environment:
-      - NEIGHBOR_IP=172.20.0.10
+      - NEIGHBOR_IP=172.20.0.19
       - NEIGHBOR_NAME=target-prime
     networks:
       net_alpha:
