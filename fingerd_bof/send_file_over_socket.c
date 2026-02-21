@@ -1,71 +1,8 @@
-#include <stdio.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <string.h>
+#include "worm.h"
 
 #define NUM_CLIENTS 5
 #define SERVER_PORT 4444
 #define IO_BUF_SIZE 2048
-
-long int get_file_size(FILE *fp) {
-    // checking if the file exist or not
-    if (fp == NULL) {
-        printf("File Not Found!\n");
-        return -1;
-    }
-
-    fseek(fp, 0L, SEEK_END);
-
-    // calculating the size of the file
-    long int res = ftell(fp);
-
-    // closing the file
-	rewind(fp);
-
-    return res;
-}
-
-// from https://stackoverflow.com/questions/9140409/transfer-integer-over-a-socket-in-c
-int send_int(int num, int fd) {
-    int32_t conv = htonl(num);
-    char *data = (char*)&conv;
-    int left = sizeof(conv);
-    int rc;
-    do {
-        rc = write(fd, data, left);
-        if (rc < 0) {
-			return -1;
-        }
-        else {
-            data += rc;
-            left -= rc;
-        }
-    }
-    while (left > 0);
-    return 0;
-}
-
-int receive_int(int *num, int fd)
-{
-    int32_t ret;
-    char *data = (char*)&ret;
-    int left = sizeof(ret);
-    int rc;
-    do {
-        rc = read(fd, data, left);
-        if (rc <= 0) { /* instead of ret */
-			return -1;
-        }
-        else {
-            data += rc;
-            left -= rc;
-        }
-    }
-    while (left > 0);
-    *num = ntohl(ret);
-    return 0;
-}
 
 int main() {
     int server_fd;
@@ -73,6 +10,7 @@ int main() {
 	char *file_names[2] = {"worm.h", "demo.sh"};
 	FILE *files[2];
 	char file_buf[256];
+	char *success = "Files recieved";
 
 	for (int i = 0; i < NUM_FILES; i++) {
 		printf("%s\n", file_names[i]);
@@ -143,7 +81,6 @@ int main() {
 			int sd = client_sock[i];
 			if (sd > 0 && FD_ISSET(sd, &read_fd)) {
 				int n = read(sd, io_buf, IO_BUF_SIZE - 1);
-				char *success = "Files recieved";
 
 				if (n == 0) {
 					printf("Client disconnected\n");
@@ -155,35 +92,7 @@ int main() {
 					// no need to send over ifles when client says it recieved the files
 					if (strncmp(success, io_buf, strlen(success)) == 0) continue;
 
-					// so if i'm doing multiple files, I just loop over the file pointers 
-					// i should first send number of files i'll be trying to send over 
-					// i should then send the name of the file and the length of file neam 
-					// then i shoud send the size of the file and then the actual file
-					if (send_int(NUM_FILES, sd) < 0) continue;
-					
-					int response;
-					if (receive_int(&response, sd) < 0) continue;
-					if (response != NUM_FILES) continue;
-					
-					for (int i = 0; i < NUM_FILES; i++) {	
-						char *file_name = file_names[i];
-						int len = strlen(file_name);
-						if (send_int(len, sd)) break;
-
-						send(sd, file_name, len, 0);
-						
-						int file_size = get_file_size(files[i]);
-						if (send_int(file_size, sd) < 0)  continue; 	
-						while (fgets(file_buf, 256, files[i]) != NULL) {
-							send(sd, file_buf, strlen(file_buf), 0);
-						}	
-						rewind(files[i]);
-						// wait until the client says it recieved the file
-						int j;
-						if (receive_int(&j, sd) < 0) break;
-						if (i != j) break;
-						// i need to do proper error handlings... this is a mess
-					}	
+					send_files(sd, files, file_names, NUM_FILES, file_buf, 256);
 				}	
 			}	
 		}	
