@@ -1,15 +1,19 @@
 #include <stdio.h>
-#include <string.h>
+#include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <sys/time.h>
 #include <arpa/inet.h>
-#include <unistd.h>
 
-#define SERVER_IP "127.0.0.1"
+#define SERVER_IP "172.17.0.1"
 #define SERVER_PORT 4444
 #define IO_BUF_SIZE 2048
 
-int send_int(int num, int fd) {
-    int32_t conv = htonl(num);
+int send_int(num, fd)
+	int num; 
+	int fd; 
+{
+    unsigned long conv = htonl((unsigned long)num);
     char *data = (char*)&conv;
     int left = sizeof(conv);
     int rc;
@@ -27,9 +31,11 @@ int send_int(int num, int fd) {
     return 0;
 }
 
-int receive_int(int *num, int fd)
+int receive_int(num, fd)
+	int *num; 
+	int fd;
 {
-    int32_t ret;
+    unsigned long ret;
     char *data = (char*)&ret;
     int left = sizeof(ret);
     int rc;
@@ -49,57 +55,62 @@ int receive_int(int *num, int fd)
 }
 
 int main() {
-    int server_sock = 0;
+	int i, j, n;
+    int server_sock;
+	int file_size, len, num_files;
+	struct timeval tv;
     struct sockaddr_in serv_addr;
 	char io_buf[IO_BUF_SIZE];
+	fd_set read_fds;
+	FILE *outfile;
+	char *file_name;
+	char *msg = "Files recieved\n";
 	char *hello = "Hello from client!\n";
 
     server_sock = socket(AF_INET, SOCK_STREAM, 0);
+	if (server_sock < 0) {
+        perror("socket");
+        return 1;
+    }
 
+	bzero((char *)&serv_addr, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(SERVER_PORT);
-
-    inet_pton(AF_INET, SERVER_IP, &serv_addr.sin_addr);
-
-    if (connect(server_sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
-		printf("Failed to connect to server!\n");
-		return 1;
+	serv_addr.sin_addr.s_addr = inet_addr(SERVER_IP);
+	
+	/* block until connection is established */
+    while (connect(server_sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) { 
+		printf("Connection failed, retrying...\n"); 
+		sleep(1);
 	}	
 
-	fd_set read_fd;
-
-	int file_size = 0;
 	while (1) {
-		send(server_sock, hello, strlen(hello), 0);
+		write(server_sock, hello, strlen(hello));
 		printf("waiting for server...\n");
-		FD_ZERO(&read_fd);
-		FD_SET(server_sock, &read_fd);
 
-		struct timeval tv = {5, 0};
+		FD_ZERO(&read_fds);
+		FD_SET(server_sock, &read_fds);
+
+		tv.tv_sec = 5;
+		tv.tv_usec = 0;
 			
-		int activity = select(server_sock + 1, &read_fd, NULL, NULL, &tv);
-		if (activity < 0) continue;
-		printf("%d\n", activity);
-
-		if (FD_ISSET(server_sock, &read_fd)) {
-			int num_files;
+		if (select(server_sock + 1, &read_fds, (fd_set *)0, (fd_set *)0, &tv) > 0) {
+			 
 			if (receive_int(&num_files, server_sock) < 0) continue;	
 			if (send_int(num_files, server_sock) < 0) continue;
 			printf("number of files expecting: %d\n", num_files);
 
-			int n;
-			for (int i = 0; i < num_files; i++) {
-				int len;
+			for (i = 0; i < num_files; i++) {
 				if (receive_int(&len, server_sock) < 0) continue;	
+				file_name = (char *)malloc((len + 1) * sizeof(char));
 
-				char *file_name;
 				n = read(server_sock, file_name, len);
+				file_name[n] = '\0';
 				if (n <= 0) break;
 
-				FILE *outfile = fopen(file_name, "w"); 
+				outfile = fopen(file_name, "w"); 
 				if (outfile == NULL) break;
 
-				int file_size;
 				if (receive_int(&file_size, server_sock) < 0) continue; 	
 				printf("%d\n", file_size);
 
@@ -112,13 +123,13 @@ int main() {
 					file_size -= n;
 				}	
 				fclose(outfile);
+				free(file_name);
 				printf("recieved %dth file\n", i);
 				send_int(i, server_sock);
 			}	
 
-			// i need to have proper checking of whether correct number of files have been successfully downloaded
-			char *msg = "Files recieved\n";
-			send(server_sock, msg, strlen(msg), 0); 
+			/* i need to have proper checking of whether correct number of files have been successfully downloaded */
+			write(server_sock, msg, strlen(msg)); 
 			break;
 		}	
 	}	

