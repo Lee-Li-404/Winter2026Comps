@@ -6,8 +6,6 @@
 
 #define HOSTS_FILE "/etc/hosts"
 #define MAX_IP_LEN 64
-#define RECEIVE_FILE_BSD_PATH "/receive_file_bsd.c"
-#define WORM_PATH "/worm.c"
 
 /*
  * Get the current machine's IP address
