@@ -1,9 +1,9 @@
 /*
 TODO:
 - make sure the "&" command actually runs the compiled programs (could use "./" instead?)
-- test this program at all...
 - ensure that the correct BSD versions of the files are being pulled in
 - convert this file to old C so that this can be ran on BSD systems
+- test this program at all...
 */
 
 
