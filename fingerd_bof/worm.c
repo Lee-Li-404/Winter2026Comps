@@ -225,7 +225,7 @@ int main() {
 	char ip[MAX_IP_LEN];
 	char my_ip[MAX_IP_LEN];
 
-	/* Get the current machine's IP address */
+	/* Get the current machine's IP */
 	get_local_ip(my_ip);
 	printf("[*] Worm Started on IP: %s\n", my_ip);
 	fflush(stdout);
@@ -268,7 +268,10 @@ int main() {
 
 		fclose(fp);
 
-		/* Logic for rescanning */
+		/* 
+        Logic for rescanning, currently unused since there should only be
+        one target in etc/hosts
+         */
 		// printf("[*] Scan complete, waiting before next scan...\n");
 		// sleep(300);  /* Wait 5 minutes before scanning again */
 	}
