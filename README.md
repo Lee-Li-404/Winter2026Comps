@@ -1,6 +1,17 @@
 # Winter2026Comps
 <img width="480" height="320" alt="worm on a keyboard" src="https://github.com/user-attachments/assets/3ea4cb00-61e2-4a5d-bab7-f4aa8af37f8a" />
 
+
+General TODO:
+    - Make worm.c work
+    - Make visualization work for fingerd version of worm (is this already done?)
+    - Create full centralized documentation
+        - Update this file in particular
+    - Clean up and organize repo
+    - I think it would be nice to build a simple python program that does all the setup
+        for the user, have it spin up docker containers, and have clear options for running the SMTP version of the worm, or fingerd version of the worm.
+
+
 More refined (still very coarse) plan for demos
 -----------------------------------------------
 
@@ -10,7 +21,7 @@ Instead of trying to combine the two exploits as a single worm, it may be worth 
 
 I think it would be possible to share the underlying client-server architecture (either central or distributed model)
 
-The planned unfolding of  the worm (Changwoo)
+The planned unfolding of the worm (Changwoo)
 ---------------------------------------------
 
 1. as a client, connect to the vulnerable fingerd socket 
