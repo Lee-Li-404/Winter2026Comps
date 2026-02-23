@@ -212,11 +212,11 @@ void infect(char *ip, char *my_ip) {
     Crazy 12:37am idea: Use SMTP debug vulnerablity to pull the files over instead...
 
     Something like this:
-    - connect socket to fingerd server
-    - do movemail and whatever to get root shell
-    - in root shell, use smtp debug to tell attacking machine to send over 
-        worm.c and worm.h (and whatever else)
-    - compile and run worm.c, in theory completing self propogation
+        - connect socket to fingerd server
+        - do movemail and whatever to get root shell
+        - in root shell, use smtp debug to tell attacking machine to send over 
+            worm.c and worm.h (and whatever else)
+        - compile and run worm.c, in theory completing self propogation
 
     Would this work? Is this faithful to morris worm? Idk. Needs more thought
     */
