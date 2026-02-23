@@ -187,16 +187,18 @@
                 infectedSystems.add(dstId);
 
                 // 2. Draw the infection vector arrow (if it doesn't already exist)
+                // 2. Draw the infection vector arrow (if it doesn't already exist)
                 const edgeId = "infect-" + srcId + "-" + dstId;
                 if (!edges.get(edgeId)) {
                   edges.add({
                     id: edgeId,
                     from: srcId,
                     to: dstId,
-                    arrows: "to", // Creates the directional arrow
+                    arrows: "to",
                     color: { color: "#da3633" },
                     width: 3,
-                    dashes: [5, 5], // Dashed line so it stands out from network cables
+                    dashes: [5, 5],
+                    physics: false, // <--- ADD THIS LINE
                   });
                 }
               }

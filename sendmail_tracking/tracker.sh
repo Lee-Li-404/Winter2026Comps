@@ -14,7 +14,7 @@ fi
 echo "--- TRACKER ACTIVE: Monitoring $BRIDGE_IFACE for Infection Vectors ---"
 
 # 2. Listen explicitly on the L2 bridge so we catch all VAX-to-VAX traffic
-tcpdump -i "$BRIDGE_IFACE" -n -U -l "tcp dst port 25" 2>/dev/null | grep --line-buffered "Flags \[S\]" | while read -r line; do
+tcpdump -i "$BRIDGE_IFACE" -n -U -l "tcp and (dst port 25 or dst port 79)" 2>/dev/null | grep --line-buffered "Flags \[S\]" | while read -r line; do
     
     # Split at '>' to isolate Source and Destination
     SRC=$(echo "$line" | awk -F'>' '{print $1}' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | tail -n 1)
