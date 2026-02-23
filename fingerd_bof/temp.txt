@@ -1,9 +1,15 @@
+cat > worm_bsd.c << 'EOF'
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <signal.h>
 #include <netdb.h>
 #include "worm_bsd.h"
+
+/* * Removed <sys/socket.h>, <netinet/in.h>, and <sys/time.h> 
+ * to prevent redeclaration conflicts. They are already being 
+ * pulled in by worm_bsd.h or netdb.h.
+ */
 
 #define HOSTS_FILE "/etc/hosts"
 #define MAX_IP_LEN 64
@@ -188,3 +194,5 @@ int main()
         fclose(fp);
     }
 }
+
+'EOF'
