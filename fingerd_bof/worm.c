@@ -7,6 +7,7 @@ TODO:
 
 
 #include "worm.h"
+#include "worm_bsd.h"
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <signal.h>
