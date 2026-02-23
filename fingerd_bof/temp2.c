@@ -1,4 +1,3 @@
-cat > worm_bsd.h << 'EOF'
 #ifndef WORM_BSD_H_
 #define WORM_BSD_H_
 #include <sys/types.h>
@@ -259,5 +258,3 @@ int send_files(client_sock, files, num_files, file_buf, buf_size)
 	return 0;
 }
 #endif
-
-'EOF'
