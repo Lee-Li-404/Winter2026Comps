@@ -85,7 +85,7 @@ fputs(b,o);fs-=n;}fclose(o);free(fn);send_int(i,s);}break;}close(s);return 0;}";
 
     write_to_sock(sock, "cat > /tmp/receive_file.c << 'EOF'\n");
     write_to_sock(sock, formatted_source);
-    write_to_sock(sock, "\n'EOF'\n");
+    write_to_sock(sock, "\nEOF\n");
     sleep(5);
 
     bzero(cmd_buf, IO_BUF_SIZE);

