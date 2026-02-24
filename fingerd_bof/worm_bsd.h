@@ -214,16 +214,16 @@ int send_files(client_sock, files, num_files, file_buf, buf_size)
 	int i, j;
 	int len;
 	int file_size;
-	int response;
+	/* int response; */
 	char *file_name;
 
 	/* communicate number of files to send */
 	if (send_int(num_files, client_sock) < 0) return -1;
 	
-	/* ensure that the client socket knows how many files to recieve */
+	/* ensure that the client socket knows how many files to recieve
 	if (receive_int(&response, client_sock) < 0) return -1;
 	if (response != num_files) return -1;
-	printf("Client expecting %d files\n", response);
+	printf("Client expecting %d files\n", response);  */
 	
 	/* try to send the files */
 	for (i = 0; i < num_files; i++) {	
