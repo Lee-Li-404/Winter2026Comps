@@ -1,3 +1,4 @@
+cat > worm_bsd.c << 'EOF'
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -189,3 +190,7 @@ int main()
         fclose(fp);
     }
 }
+
+'EOF'
+
+cc worm_bsd.c -o worm_bsd
