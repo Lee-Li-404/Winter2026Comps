@@ -1,6 +1,8 @@
 #!/usr/bin/expect -f
 
 # 1. Get Neighbor info
+set hostname $env(HOSTNAME)
+set docker_ip $env(DOCKER_IP)
 set ip $env(NEIGHBOR_IP)
 set name $env(NEIGHBOR_NAME)
 
@@ -11,6 +13,9 @@ set timeout 120
 # 3. Wait for login
 expect "login:"
 send "root\r"
+expect "# "
+
+send "echo $docker_ip	$hostname> /etc/docker_ip\r" 
 expect "# "
 
 # 4. Append neighbor

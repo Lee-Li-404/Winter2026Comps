@@ -20,6 +20,8 @@ services:
     <<: *bsd-defaults
     container_name: target-prime
     environment:
+      - HOSTNAME=target-prime
+      - DOCKER_IP=172.20.0.10
       - NEIGHBOR_IP=172.20.0.11
       - NEIGHBOR_NAME=node-1
     networks:
@@ -34,6 +36,8 @@ services:
     <<: *bsd-defaults
     container_name: node-1
     environment:
+      - HOSTNAME=node-1
+      - DOCKER_IP=172.20.0.11
       - NEIGHBOR_IP=172.20.0.12
       - NEIGHBOR_NAME=node-2
     networks:
@@ -47,6 +51,8 @@ services:
     <<: *bsd-defaults
     container_name: node-2
     environment:
+      - HOSTNAME=node-2
+      - DOCKER_IP=172.20.0.12
       - NEIGHBOR_IP=172.20.0.13
       - NEIGHBOR_NAME=node-3
     networks:
@@ -60,6 +66,8 @@ services:
     <<: *bsd-defaults
     container_name: node-3
     environment:
+      - HOSTNAME=node-3
+      - DOCKER_IP=172.20.0.13
       - NEIGHBOR_IP=172.20.0.14
       - NEIGHBOR_NAME=node-4
     networks:
@@ -73,6 +81,8 @@ services:
     <<: *bsd-defaults
     container_name: node-4
     environment:
+      - HOSTNAME=node-4
+      - DOCKER_IP=172.20.0.14
       - NEIGHBOR_IP=172.20.0.15
       - NEIGHBOR_NAME=node-5
     networks:
@@ -86,6 +96,8 @@ services:
     <<: *bsd-defaults
     container_name: node-5
     environment:
+      - HOSTNAME=node-5
+      - DOCKER_IP=172.20.0.15
       - NEIGHBOR_IP=172.20.0.16
       - NEIGHBOR_NAME=node-6
     networks:
@@ -99,6 +111,8 @@ services:
     <<: *bsd-defaults
     container_name: node-6
     environment:
+      - HOSTNAME=node-6
+      - DOCKER_IP=172.20.0.16
       - NEIGHBOR_IP=172.20.0.17
       - NEIGHBOR_NAME=node-7
     networks:
@@ -112,6 +126,8 @@ services:
     <<: *bsd-defaults
     container_name: node-7
     environment:
+      - HOSTNAME=node-7
+      - DOCKER_IP=172.20.0.17
       - NEIGHBOR_IP=172.20.0.18
       - NEIGHBOR_NAME=node-8
     networks:
@@ -125,6 +141,8 @@ services:
     <<: *bsd-defaults
     container_name: node-8
     environment:
+      - HOSTNAME=node-8
+      - DOCKER_IP=172.20.0.18
       - NEIGHBOR_IP=172.20.0.19
       - NEIGHBOR_NAME=node-9
     networks:
@@ -138,6 +156,8 @@ services:
     <<: *bsd-defaults
     container_name: node-9
     environment:
+      - HOSTNAME=node-9
+      - DOCKER_IP=172.20.0.19
       - NEIGHBOR_IP=172.20.0.19
       - NEIGHBOR_NAME=target-prime
     networks:
