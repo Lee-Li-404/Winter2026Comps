@@ -3,8 +3,6 @@
 
 
 General TODO:
-    - Make worm.c work
-    - Make visualization work for fingerd version of worm (is this already done?)
     - Create full centralized documentation
         - Update this file in particular
     - Clean up and organize repo
