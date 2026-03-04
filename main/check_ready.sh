@@ -8,7 +8,7 @@ RUN_INFECT=false
 URL="http://localhost:8000/www/"
 
 # Parse flags
-for arg in "$@"; do [ "$arg" == "-sendmail" ] && RUN_INFECT=true; done
+for arg in "$@"; do [ "$arg" == "-sendmail", "$arg" == "-fingerd" ] && RUN_INFECT=true; done
 
 # --- 1. CLEANUP & START ---
 # Stop old containers and start the fresh 10-node cluster
@@ -61,4 +61,4 @@ if [ "$RUN_INFECT" = true ]; then
 fi
 
 echo "-------------------------------------------------------"
-echo "Deployment Complete."
+echo "Deployment Complete"
