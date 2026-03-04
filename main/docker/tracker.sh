@@ -1,6 +1,6 @@
 #!/bin/sh
 
-EDGE_FILE="/app/www/infected.txt"
+EDGE_FILE="/app/visualization/infected.txt"
 > $EDGE_FILE
 
 # 1. Auto-discover the specific Docker bridge handling our network
