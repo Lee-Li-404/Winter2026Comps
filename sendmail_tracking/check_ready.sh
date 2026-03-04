@@ -47,7 +47,7 @@ sleep 1
 # --- 4. WEB MONITORING & BROWSER ---
 # Start background server and launch browser
 PY_CMD=$(command -v python3 || command -v python)
-nohup $PY_CMD -m http.server 8000 > web_server.log 2>&1 &
+nohup $PY_CMD -m http.server 8000 > /dev/null 2>&1 &
 
 if [[ "$OSTYPE" == "darwin"* ]]; then open "$URL"
 elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then start "$URL"
