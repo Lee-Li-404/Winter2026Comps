@@ -14,8 +14,10 @@ done
 
 # --- 1. CLEANUP & START ---
 # Stop old containers and start the fresh 10-node cluster
+cd docker
 docker-compose down --remove-orphans
 docker-compose up -d
+cd ..
 
 # --- 2. STABILIZATION (The "Wait for 2nd Banner" Loop) ---
 # We wait for the specific BSD banner to appear twice to account for the SIMH reboot.

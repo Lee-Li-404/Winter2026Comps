@@ -1,5 +1,6 @@
 #!/bin/sh
 
+# Change this line in tracker.sh
 EDGE_FILE="/app/visualization/infected.txt"
 > $EDGE_FILE
 

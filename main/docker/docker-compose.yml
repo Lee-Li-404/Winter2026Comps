@@ -191,7 +191,7 @@ services:
     network_mode: "host"
     volumes:
       - ./tracker.sh:/app/tracker.sh
-      - ./www:/app/www
+      - ../visualization:/app/visualization
     working_dir: /app
     command: >
       /bin/sh -c "
