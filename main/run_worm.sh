@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # --- CONFIGURATION ---
-NODES=("target-prime" "node-1" "node-2" "node-3" "node-4" "node-5" "node-6" "node-7" "node-8" "node-9")
+NODES=("attacker" "node-1" "node-2" "node-3" "node-4" "node-5" "node-6" "node-7" "node-8" "node-9")
 TARGET_PHRASE="4.3 BSD UNIX (simh) (console)"
 TARGET_COUNT=2
 RUN_INFECT=false

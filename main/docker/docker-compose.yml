@@ -16,11 +16,11 @@ x-bsd-defaults: &bsd-defaults
 services:
   # --- VAX NODES (10 Nodes Total) ---
 
-  target-prime:
+  attacker:
     <<: *bsd-defaults
-    container_name: target-prime
+    container_name: attacker
     environment:
-      - HOSTNAME=target-prime
+      - HOSTNAME=attacker
       - DOCKER_IP=172.20.0.10
       - NEIGHBOR_IP=172.20.0.11
       - NEIGHBOR_NAME=node-1
@@ -159,7 +159,7 @@ services:
       - HOSTNAME=node-9
       - DOCKER_IP=172.20.0.19
       - NEIGHBOR_IP=172.20.0.19
-      - NEIGHBOR_NAME=target-prime
+      - NEIGHBOR_NAME=attacker
     networks:
       net_alpha:
         ipv4_address: 172.20.0.19
