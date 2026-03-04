@@ -5,7 +5,7 @@ NODES=("target-prime" "node-1" "node-2" "node-3" "node-4" "node-5" "node-6" "nod
 TARGET_PHRASE="4.3 BSD UNIX (simh) (console)"
 TARGET_COUNT=2
 RUN_INFECT=false
-URL="http://localhost:8000/main/visualization/"
+URL="http://localhost:8000/visualization/"
 
 # Parse flags
 for arg in "$@"; do
@@ -14,8 +14,10 @@ done
 
 # --- 1. CLEANUP & START ---
 # Stop old containers and start the fresh 10-node cluster
+cd docker
 docker-compose down --remove-orphans
 docker-compose up -d
+cd ..
 
 # --- 2. STABILIZATION (The "Wait for 2nd Banner" Loop) ---
 # We wait for the specific BSD banner to appear twice to account for the SIMH reboot.
