@@ -5,7 +5,7 @@ NODES=("target-prime" "node-1" "node-2" "node-3" "node-4" "node-5" "node-6" "nod
 TARGET_PHRASE="4.3 BSD UNIX (simh) (console)"
 TARGET_COUNT=2
 RUN_INFECT=false
-URL="http://localhost:8000/visualization/"
+URL="http://localhost:8000/main/visualization/"
 
 # Parse flags
 for arg in "$@"; do
