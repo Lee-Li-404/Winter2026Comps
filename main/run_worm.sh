@@ -12,12 +12,22 @@ for arg in "$@"; do
     [[ "$arg" == "-sendmail" || "$arg" == "-fingerd" ]] && RUN_INFECT=true
 done
 
+
 # --- 1. CLEANUP & START ---
-# Stop old containers and start the fresh 10-node cluster
 cd docker
+
+# Check if the specific image exists; if not, build it
+if [[ "$(docker images -q ye-olde-bsd 2> /dev/null)" == "" ]]; then
+    echo "[-] Image 'ye-olde-bsd' not found. Running build script..."
+    chmod +x build.sh  # Ensure it's executable
+    ./build.sh
+fi
+
+# Stop old containers and start the fresh 10-node cluster
 docker-compose down --remove-orphans
 docker-compose up -d
 cd ..
+
 
 # --- 2. STABILIZATION (The "Wait for 2nd Banner" Loop) ---
 # We wait for the specific BSD banner to appear twice to account for the SIMH reboot.
