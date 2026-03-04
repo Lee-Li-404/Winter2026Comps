@@ -15,7 +15,7 @@ To run the automated version of the worm setup and attack (easier but less inter
     - Run 'docker compose up' to start the network of containers
 
 2. Start the live visualization
-    - Lee plz put the instructions on how to start the visualization in here
+    The visualization should automatically open in your default browser. If it does not open automatically, manually go to: http://localhost:8000/visualization/
 
 3. Launch the attack
     - Run 'cd /main'
