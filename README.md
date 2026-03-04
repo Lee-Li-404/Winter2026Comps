@@ -10,8 +10,9 @@ To run the automated version of the worm setup and attack (easier but less inter
 
 1. Set up the necessary docker containers
     - Open this repository in your terminal, and run 'cd /main/docker'
-    - Run 'docker compose up --build' to build the containers with the nescessary 
-        simh and 4.3BSD image
+    - Run './build.sh' to build the containers with the nescessary 
+        simh and 4.3BSD images
+    - Run 'docker compose up' to start the network of containers
 
 2. Start the live visualization
     - Lee plz put the instructions on how to start the visualization in here
@@ -27,8 +28,10 @@ To manualy run the sendmail worm:
 
 1. Set up the necessary docker containers
     - Open this repository in your terminal, and run 'cd /main/docker'
-    - Run 'docker compose up --build' to build the containers with the nescessary 
-        simh and 4.3BSD image
+    - Run './build.sh' to build the containers with the nescessary 
+        simh and 4.3BSD images
+    - Run 'docker compose up' to start the network of containers
+
 
 2. Start the live visualization
     - Lee plz put the instructions on how to start the visualization in here
