@@ -8,7 +8,9 @@ RUN_INFECT=false
 URL="http://localhost:8000/visualization/"
 
 # Parse flags
-for arg in "$@"; do [ "$arg" == "-sendmail", "$arg" == "-fingerd" ] && RUN_INFECT=true; done
+for arg in "$@"; do
+    [[ "$arg" == "-sendmail" || "$arg" == "-fingerd" ]] && RUN_INFECT=true
+done
 
 # --- 1. CLEANUP & START ---
 # Stop old containers and start the fresh 10-node cluster
@@ -57,7 +59,7 @@ else xdg-open "$URL"; fi
 # Execute infection simulation if flag is present
 if [ "$RUN_INFECT" = true ]; then
     echo "--- Executing Infection Simulation ---"
-    $PY_CMD infect.py
+    $PY_CMD infect.py "$@"
 fi
 
 echo "-------------------------------------------------------"

