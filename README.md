@@ -4,9 +4,10 @@
 Welcome to our comps project repository! This repository contains all of the code needed to launch our (mostly) faithful historical recreation of the Morris Worm in a simulated 1988 internet. Hope you find it interesting!
 
 HOW TO USE THIS REPOSITORY:
+=
 
-
-To run the automated version of the worm setup and attack:
+To run the automated version of the worm setup and attack
+-
 
 1. Set up the necessary docker containers
 - Open this repository in your terminal, and run `cd /main/docker`
@@ -20,7 +21,8 @@ To run the automated version of the worm setup and attack:
 - Navigate to the live visualization that should have automatically opened on your browser to watch the worm spread in real time!
 
 
-To manualy run the sendmail worm:
+To manualy run the sendmail worm
+-
 
 1. Set up the necessary docker containers
 - Open this repository in your terminal, and run `cd ./main/docker`
@@ -35,7 +37,8 @@ To manualy run the sendmail worm:
 - In the folder `/main/sendmail`, open the `maunal_sendmail_attack.txt` file, and enter the commands in there, hitting enter and allowing the machine to respond after each one.
 
 
-To manualy run the fingerd worm:
+To manualy run the fingerd worm
+-
 
 1. Set up the necessary docker containers
 - Open this repository in your terminal, and run `cd ./main/docker`
