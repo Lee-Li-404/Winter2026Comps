@@ -3,9 +3,6 @@
 
 Welcome to our comps project repository! This repository contains all of the code needed to launch our (mostly) faithful historical recreation of the Morris Worm in a simulated 1988 internet. Hope you find it interesting!
 
-HOW TO USE THIS REPOSITORY:
-=
-
 To run the automated version of the worm setup and attack
 -
 
