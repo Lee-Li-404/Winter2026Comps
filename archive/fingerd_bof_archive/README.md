@@ -30,6 +30,8 @@ Notes
 
 Currently, the logging server just dumps whatever it receives over the socket without much formatting. It would be nice if we can keep track of from which host the logging's coming from. This can be achieved by first making the logging client send over their hostname, which will be stored in some kind of data structure (most likely a fixed char * array). This way, I can format the print statements to first print out the hostname, much like the docker compose dashboard(?).
 
+Also, it is very possible to fork multiple processes and let child processes do the attack while the main process searches for reachable hosts and checks whether there are worms already running on the server. When iterating over hosts to infect, I just fork a process for each host to conduct the attack in parallel. 
+
 Also, my currently handling of forked processes are really bad, because I never kill the server process (child). I should make it so that the main process relays `SIGTERM` to its child process to do clean up before properly exiting.
 
 The worm has 2 main components: 
