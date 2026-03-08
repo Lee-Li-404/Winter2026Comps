@@ -28,7 +28,6 @@ To manually run the sendmail worm:
     - Run `docker compose up` to start the network of containers
 
 2. Launch the attack
-    - Make sure you are in the docker folder, run `cd ./main/docker/`
     - Attach to the attacker node by running `docker attach attacker`
     - Press enter, and when prompted for a login, type `root`, and then hit enter again.
     - In the folder /main/sendmail, open the maunal_sendmail_attack.txt file, and enter the commands in there, hitting enter and allowing the machine to respond after each one.
