@@ -60,11 +60,11 @@ To manually run the fingerd worm:
 File Descriptions:
 -
 
-- `/main`
+- /main
     - `README.md`: this file, general documentation
     - `run_worm.sh`: script that automatically sets up and runs a specified version of the worm
     - `infect.py`: logic for the run_worm.sh script
-    - `/docker`
+    - /docker
         - `build.sh`: Helper script for building containers
         - `docker-compose.yml`: Orchestrates all container services, networks, and startup configuration
         - `Dockerfile`: Builds the Docker image with SIMH, Alpine Linux, and BSD system setup
@@ -73,14 +73,14 @@ File Descriptions:
         - `setup.exp`: Expect script that automates interactive BSD system setup during Dockerfile build
         - `identity.exp`: Expect script that handles login/authentication before SIMH boots
         - `tracker.sh`: For visualization live monitoring
-        - `/fingerd_files`: Contains fingerd worm source code (`send_file_over_socket_bsd.c`, `worm_bsd.c`, `worm_bsd.h`) that is ported into the simulation
+        - /fingerd_files: Contains fingerd worm source code (`send_file_over_socket_bsd.c`, `worm_bsd.c`, `worm_bsd.h`) that is ported into the simulation
         - `43.tap.gz`, `boot42.gz`, `miniroot.gz`: General configuration files
-    - `/fingerd`
+    - /fingerd
         - `send_file_over_socket_bsd.c`: Program for sending files over sockets written in old C. Works in tandem with the receive_file.c program that gets run on the target machine.
         - `worm_bsd.c`: The core fingerd worm logic, written in old C.
         - `worm_bsd.h`: Lots of helper functions for worm_bsd.c. Includes all of the payloads needed to complete the fingerd and movemail exploits. 
-    - `/sendmail`
+    - /sendmail
         - `manual_sendmail_attack.txt`: Includes all of the commands needed to execute a manual version of the sendmail attack. Also contains the sendmail worm source code.
-    - `/visualization`
+    - /visualization
         - `index.html`: Defines live tracker website
         - `infected.txt`: Keeps track of infected nodes IP addresses
