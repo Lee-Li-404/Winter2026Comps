@@ -9,15 +9,15 @@ HOW TO USE THIS REPOSITORY:
 To run the automated version of the worm setup and attack:
 
 1. Set up the necessary docker containers
-    - Open this repository in your terminal, and run `cd /main/docker`
-    - Run `./build.sh` to build the containers with the nescessary 
-        simh and 4.3BSD images
+- Open this repository in your terminal, and run `cd /main/docker`
+- Run `./build.sh` to build the containers with the nescessary 
+    simh and 4.3BSD images
 
 2. Launch the attack
-    - Run `cd /main`
-        - To run the sendmail debug exploit worm, run `./run_worm.sh -sendmail`
-        - To run the fingerd buffer overflow attack worm, run `./run_worm.sh -fingerd`
-    - Navigate to the live visualization that should have automatically opened on your browser to watch the worm spread in real time!
+- Run `cd /main`
+    - To run the sendmail debug exploit worm, run `./run_worm.sh -sendmail`
+    - To run the fingerd buffer overflow attack worm, run `./run_worm.sh -fingerd`
+- Navigate to the live visualization that should have automatically opened on your browser to watch the worm spread in real time!
 
 
 To manualy run the sendmail worm:
