@@ -43,7 +43,6 @@ To manually run the fingerd worm:
     - Run `docker compose up` to start the network of containers
 
 2. Launch the attack
-    - Make sure you are in the docker folder, run `cd ./main/docker/`
     - Attach to the attacker node by running `docker attach attacker`
     - Press enter, and when prompted for a login, type `root`, and then hit enter again.
     - To get the worm files onto the attacking machine, run these exact commands in order:
