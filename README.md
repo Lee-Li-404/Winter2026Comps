@@ -52,7 +52,7 @@ To manually run the fingerd worm:
         `cc worm_bsd.c -o worm_bsd`
         `cc send_file_over_socket_bsd.c -o send_file_over_socket_bsd`
     - Then, to launch the live infection tracker, run `python3 -m http.server 8000`
-    - Navigate to localhost:8000/www in your browser to view the live infection tracker
+    - Navigate to [localhost:8000/visualization](http://localhost:8000/visualization/) in your browser to view the live infection tracker
     - Then, back in the simh environment, run `./worm_bsd` to start the worm. 
 
 File Descriptions:
