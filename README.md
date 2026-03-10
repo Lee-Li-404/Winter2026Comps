@@ -99,7 +99,11 @@ File Descriptions:
     - /fingerd
         - `send_file_over_socket_bsd.c`: Program for sending files over sockets written in old C. Works in tandem with the receive_file.c program that gets run on the target machine.
         - `worm_bsd.c`: The core fingerd worm logic, written in old C.
-        - `worm_bsd.h`: Lots of helper functions for worm_bsd.c. Includes all of the payloads needed to complete the fingerd and movemail exploits. 
+        - `worm_bsd.h`: Lots of helper functions for worm_bsd.c. Includes all of the payloads needed to complete the fingerd and movemail exploits.
+        - `worm.c`: The core fingerd worm logic, written in modern C.
+        - `worm.h`: Analogous to `worm_bsd.h` but for `worm.c`
+        - `worm_bsd_v2.c`: The core fingerd worm logic with the ability to connect to a log server to dump outputs, written in old C.
+        - `worm_bsd_v2.h`: Analogous to `worm_bsd.h` but for `worm_bsd_v2.c`. Mostly the same code as `worm_bsd.h` but putting in a separate file to make sure it doesn't break the other worm.
     - /sendmail
         - `manual_sendmail_attack.txt`: Includes all of the commands needed to execute a manual version of the sendmail attack. Also contains the sendmail worm source code.
     - /visualization
