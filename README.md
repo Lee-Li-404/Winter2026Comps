@@ -46,11 +46,13 @@ To manually run the fingerd worm:
     - Attach to the attacker node by running `docker attach attacker`
     - Press enter, and when prompted for a login, type `root`, and then hit enter again.
     - To get the worm files onto the attacking machine, run these exact commands in order:
-        `cd /tmp`
-        `mt -f /dev/rmt12 rew`
-        `tar xvf /dev/rmt12` 
-        `cc worm_bsd.c -o worm_bsd`
-        `cc send_file_over_socket_bsd.c -o send_file_over_socket_bsd`
+   ```
+        cd /tmp
+        mt -f /dev/rmt12 rew
+        tar xvf /dev/rmt12
+        cc worm_bsd.c -o worm_bsd
+        cc send_file_over_socket_bsd.c -o send_file_over_socket_bsd
+    ```
     - Then, to launch the live infection tracker, run `python3 -m http.server 8000`
     - Navigate to [localhost:8000/visualization](http://localhost:8000/visualization/) in your browser to view the live infection tracker
     - Then, back in the simh environment, run `./worm_bsd` to start the worm.
