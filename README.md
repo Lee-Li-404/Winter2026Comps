@@ -74,7 +74,7 @@ tracker.
 
 2. Launch the attack
     - Open this repository in your terminal, and run `cd ./main/fingerd`
-    - Compile the worm `gcc worm.h -o worm`
+    - Compile the worm `gcc worm.c -o worm`
     - Run the worm `./worm`
     - See the worm unfold with live logging  
 
