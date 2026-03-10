@@ -55,8 +55,13 @@ To manually run the fingerd worm:
     - Navigate to [localhost:8000/visualization](http://localhost:8000/visualization/) in your browser to view the live infection tracker
     - Then, back in the simh environment, run `./worm_bsd` to start the worm.
   
-To manually run another version of the fingerd worm: 
+To manually run the fingerd worm with live logging: 
 -
+
+The main difference of this version of the worm is that you start the worm on your host machine, 
+which will infect `attacker` node to spread the worm inside to the network of 4.3 bsd machines. 
+It also supports live logging, so you can see what the worms are doing as you are viewing the live 
+tracker.
 
 1. Set up necessary docker containers
     - Open this repository in your terminal, and run `cd ./main/docker`
