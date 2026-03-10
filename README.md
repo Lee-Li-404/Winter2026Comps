@@ -53,7 +53,23 @@ To manually run the fingerd worm:
         `cc send_file_over_socket_bsd.c -o send_file_over_socket_bsd`
     - Then, to launch the live infection tracker, run `python3 -m http.server 8000`
     - Navigate to [localhost:8000/visualization](http://localhost:8000/visualization/) in your browser to view the live infection tracker
-    - Then, back in the simh environment, run `./worm_bsd` to start the worm. 
+    - Then, back in the simh environment, run `./worm_bsd` to start the worm.
+  
+To manually run another version of the fingerd worm: 
+-
+
+1. Set up necessary docker containers
+    - Open this repository in your terminal, and run `cd ./main/docker`
+    - Run `./build.sh` to build the containers with the necessary 
+        simh and 4.3BSD images
+    - Run `docker compose up` to start the network of containers
+    - Once all the containers are booted, launch the live infection tracker by running `python3 -m http.server 8000`
+
+2. Launch the attack
+    - Open this repository in your terminal, and run `cd ./main/fingerd`
+    - Compile the worm `gcc worm.h -o worm`
+    - Run the worm `./worm`
+    - See the worm unfold with live logging  
 
 File Descriptions:
 -
