@@ -235,7 +235,8 @@ phase1_attack(fd, target_ip)
 	flushed_printf("%s: ", target_ip);
 	read_from_sock(fd, io_buf, (size_t)IO_BUF_SIZE);
 	/* fix the ip */
-	write_to_sock(fd, "./client 172.20.0.1\n");
+	sprintf(io_buf, "./client %s\n", docker_ip[0].ip);
+	write_to_sock(fd, io_buf);
 }	
 
 void client(target_ip) 

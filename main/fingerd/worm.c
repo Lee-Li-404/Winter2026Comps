@@ -166,11 +166,13 @@ void server() {
 		}	
 
 		if (FD_ISSET(log_server_fd, &read_fd)) {
+			printf("\n");	
 			handle_connection_event(
 				"log", 
 				log_server_fd, (struct sockaddr *)&log_serv_addr, (socklen_t *)&log_serv_addrlen,
 				log_client_sock, NUM_LOG_CLIENTS
 			);
+			printf("\n");	
 		}	
 
 		// actually handling clients
