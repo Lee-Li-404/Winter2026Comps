@@ -109,3 +109,8 @@ File Descriptions:
     - /visualization
         - `index.html`: Defines live tracker website
         - `infected.txt`: Keeps track of infected nodes IP addresses
+
+
+Citations:
+-
+We followed this article by rapid7 to set up much of our 4.3BSD emulation: https://www.rapid7.com/blog/post/2019/01/02/the-ghost-of-exploits-past-a-deep-dive-into-the-morris-worm/
