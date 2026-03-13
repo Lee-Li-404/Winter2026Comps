@@ -116,5 +116,5 @@ File Descriptions:
 Citations:
 -
 
-- The Ghost of Exploits Past: A Deep Dive into the Morris Worm: https://www.rapid7.com/blog/post/2019/01/02/the-ghost-of-exploits-past-a-deep-dive-into-the-morris-worm/
-- The Internet Worm Program: An Analysis: https://spaf.cerias.purdue.edu/tech-reps/823.pdf?pdf_direct=1
+- [The Ghost of Exploits Past: A Deep Dive into the Morris Worm](https://www.rapid7.com/blog/post/2019/01/02/the-ghost-of-exploits-past-a-deep-dive-into-the-morris-worm/)
+- [The Internet Worm Program: An Analysis](https://spaf.cerias.purdue.edu/tech-reps/823.pdf?pdf_direct=1)
