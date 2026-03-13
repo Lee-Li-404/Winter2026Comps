@@ -109,6 +109,8 @@ File Descriptions:
     - /visualization
         - `index.html`: Defines live tracker website
         - `infected.txt`: Keeps track of infected nodes IP addresses
+- /archive
+    - Old code and documentation is stored here from the project's development
 
 
 Citations:
