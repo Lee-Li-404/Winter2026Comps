@@ -1,0 +1,248 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Inside the Morris Worm</title>
+
+    <style>
+      body {
+        background: #0d1117;
+        color: #c9d1d9;
+        font-family: Arial, sans-serif;
+        max-width: 900px;
+        margin: auto;
+        padding: 40px;
+      }
+
+      h1 {
+        font-size: 48px;
+        text-shadow: 0 0 10px #00ff9c;
+      }
+
+      h2 {
+        margin-top: 40px;
+      }
+
+      code {
+        display: block;
+        background: #111;
+        border: 1px solid #30363d;
+        padding: 12px;
+        margin: 15px 0;
+        font-family: monospace;
+      }
+
+      .terminal {
+        background: #111;
+        border: 1px solid #00ff9c;
+        padding: 20px;
+        margin-top: 40px;
+        font-family: monospace;
+      }
+
+      .section {
+        margin-top: 60px;
+      }
+
+      a {
+        color: #00ff9c;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>Inside the Morris Worm</h1>
+
+    <p>A sandbox simulation of the first internet worm</p>
+
+    <p style="font-family: monospace">Team Members: Changwoo • Lee • Nathan</p>
+
+    <p style="font-family: monospace; font-size: 14px">Advisor: Jeff Ondich</p>
+
+    <div class="terminal">
+      <div>> booting simulated network...</div>
+      <div>> loading 4.3BSD nodes...</div>
+      <div>> starting sendmail service...</div>
+      <div>> starting fingerd service...</div>
+      <div>> launching worm...</div>
+      <div>> monitoring network traffic...</div>
+    </div>
+
+    <div class="section">
+      <h2>About the Project</h2>
+
+      <p>
+        In 1988, Robert T. Morris released the first widely known internet worm.
+        The program spread rapidly across the early internet and infected
+        thousands of machines. Because of a flaw in its infection logic, many
+        systems became overloaded by multiple worm instances, bringing large
+        parts of the network to a halt.
+      </p>
+
+      <p>
+        For our Computer Science Comps project, we built a sandbox environment
+        and recreated key aspects of this historic attack in a safe and
+        controlled setting.
+      </p>
+    </div>
+
+    <div class="section">
+      <h2>Our Simulation</h2>
+
+      <p>
+        Our environment recreates a small network of machines similar to those
+        present on the early internet.
+      </p>
+
+      <ul>
+        <li>Docker containers simulate multiple computers</li>
+        <li>Each container runs a SIMH emulator</li>
+        <li>SIMH boots the historical 4.3BSD UNIX system</li>
+        <li>Network services such as sendmail and fingerd are enabled</li>
+      </ul>
+
+      <p>
+        Within this simulated network we implemented worm programs inspired by
+        the original Morris Worm in order to study how infections propagate
+        across vulnerable systems.
+      </p>
+    </div>
+
+    <div class="section">
+      <h1>The Morris Worm</h1>
+
+      <p>
+        In November 1988, a graduate student named Robert T. Morris released a
+        program onto the early internet that would later become known as the
+        Morris Worm. It is widely considered the first major self-propagating
+        worm to spread across the internet.
+      </p>
+
+      <p>
+        At the time, the internet was still small and largely used by
+        universities and research institutions. Security was not a major design
+        concern, and many systems trusted each other by default.
+      </p>
+
+      <h2>The Early Internet</h2>
+
+      <p>
+        In 1988, the internet consisted of roughly sixty thousand connected
+        machines. Many of these systems ran the UNIX operating system,
+        particularly the 4.3BSD distribution used at universities and research
+        labs.
+      </p>
+
+      <p>
+        Network services were often exposed directly to the internet and assumed
+        that incoming connections were trustworthy. This environment made it
+        possible for a self-propagating program to move quickly between
+        machines.
+      </p>
+
+      <h2>How the Worm Spread</h2>
+
+      <ul>
+        <li>Sendmail debug mode allowed remote command execution</li>
+        <li>The fingerd service contained a buffer overflow vulnerability</li>
+        <li>Weak passwords allowed login through remote shell services</li>
+      </ul>
+
+      <p>
+        By combining these techniques, the worm could compromise a machine and
+        then install a new copy of itself, allowing the infection to continue
+        spreading across the network.
+      </p>
+
+      <h2>The Bug That Took Down the Internet</h2>
+
+      <p>
+        Morris attempted to prevent the worm from infecting the same machine
+        multiple times. However, the mechanism designed to avoid reinfection did
+        not work correctly.
+      </p>
+
+      <p>
+        As a result, machines frequently became infected repeatedly. Multiple
+        copies of the worm would run simultaneously, consuming system resources
+        and causing many computers to slow down or crash.
+      </p>
+
+      <h2>Aftermath</h2>
+
+      <p>
+        The Morris Worm led to the first major legal case involving computer
+        hacking in the United States. Robert Morris was later prosecuted under
+        the Computer Fraud and Abuse Act.
+      </p>
+
+      <p>
+        The incident also prompted the creation of the first Computer Emergency
+        Response Team (CERT), which was designed to coordinate responses to
+        large-scale cybersecurity incidents.
+      </p>
+    </div>
+
+    <div class="section">
+      <h1>Simulation Environment</h1>
+
+      <p>
+        Project Repository:
+        <a href="https://github.com/Lee-Li-404/Winter2026Comps" target="_blank">
+          github-link
+        </a>
+      </p>
+
+      <p>
+        To study the behavior of the Morris Worm safely, we built a sandboxed
+        network environment that recreates important aspects of the early
+        internet. Instead of reproducing the worm exactly, our goal was to build
+        a system similar enough to observe how self-propagating malware spreads.
+      </p>
+    </div>
+
+    <div class="section">
+      <h1>Fingerd Buffer Overflow</h1>
+
+      <p>
+        Another vulnerability exploited by the Morris Worm involved the
+        <strong>fingerd</strong> service.
+      </p>
+
+      <code> echo username | nc target_machine 79 </code>
+
+      <p>
+        The original fingerd implementation used the unsafe C function
+        <strong>gets()</strong>.
+      </p>
+
+      <code> char line[512]; gets(line); </code>
+
+      <p>
+        Because gets() does not check input length, attackers could overflow the
+        buffer and overwrite the return address on the stack.
+      </p>
+    </div>
+
+    <div class="section">
+      <h1>Sendmail Exploit</h1>
+
+      <p>
+        Another propagation method involved exploiting a debugging feature in
+        the <strong>sendmail</strong> mail transfer service.
+      </p>
+
+      <code> telnet node-1 25 </code>
+
+      <code> DEBUG </code>
+
+      <code> rcpt to:<"| sed '1,/^$/d' | /bin/sh"> </code>
+
+      <p>
+        This converts the SMTP session into a remote command execution channel.
+        The worm then uploads its source code and compiles it on the target
+        system.
+      </p>
+    </div>
+  </body>
+</html>
