@@ -113,7 +113,7 @@ File Descriptions:
     - Old code and documentation is stored here from the project's development
 
 
-Citations:
+Readings:
 -
 
 - [The Ghost of Exploits Past: A Deep Dive into the Morris Worm](https://www.rapid7.com/blog/post/2019/01/02/the-ghost-of-exploits-past-a-deep-dive-into-the-morris-worm/)
